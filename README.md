@@ -1,73 +1,89 @@
-# Welcome to your Lovable project
+# 🌍 trip.cicl
 
-## Project info
+### Your Personal Travel Copilot
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+trip.cicl is an intelligent travel planning platform designed to turn overwhelming trip planning into a seamless, personalized experience.
 
-## How can I edit this code?
+Instead of browsing endlessly or juggling multiple apps, trip.cicl understands how you want to travel — and builds a journey tailored just for you.
 
-There are several ways of editing your application.
+---
 
-**Use Lovable**
+## ✨ What Makes trip.cicl Different
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+Most travel platforms give you options.
+trip.cicl gives you **clarity**.
 
-Changes made via Lovable will be committed automatically to this repo.
+It doesn’t just suggest places — it designs your entire experience based on:
 
-**Use your preferred IDE**
+* Your travel pace
+* Your preferences
+* Your style of exploration
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+Whether you want a relaxed getaway or a fast-paced adventure, trip.cicl adapts to you.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+---
 
-Follow these steps:
+## 🧠 Built Around You
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+Every journey starts with you.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+trip.cicl personalizes your trip by understanding:
 
-# Step 3: Install the necessary dependencies.
-npm i
+* How many places you want to explore in a day
+* Whether you prefer famous landmarks or hidden gems
+* How you like to experience a destination
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
-```
+The result is a plan that feels natural, realistic, and enjoyable.
 
-**Edit a file directly in GitHub**
+---
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 📅 Smarter Itineraries
 
-**Use GitHub Codespaces**
+Your trip is not just a list — it’s a story.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+trip.cicl creates structured, day-wise plans that:
 
-## What technologies are used for this project?
+* Avoid overwhelming schedules
+* Group places intelligently
+* Make every day feel balanced and meaningful
 
-This project is built with:
+So you spend less time planning, and more time experiencing.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+---
 
-## How can I deploy this project?
+## 🎯 Designed for Real Travel
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+Trips are dynamic — and so is trip.cicl.
 
-## Can I connect a custom domain to my Lovable project?
+It gives you flexibility to:
 
-Yes, you can!
+* Adjust your plans easily
+* Explore alternatives
+* Stay in control without stress
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+Because no two journeys are the same.
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+---
+
+## 💡 The Experience
+
+Using trip.cicl should feel like:
+
+* Talking to a smart travel companion
+* Being guided, not instructed
+* Feeling confident about every decision
+
+---
+
+## 🚀 Our Vision
+
+To build a world where planning a trip feels as exciting as taking one.
+
+trip.cicl is not just a planner —
+it’s your **travel thinking partner**.
+
+---
+
+## 🌐 Get Started
+
+Start your journey with trip.cicl and experience travel planning, reimagined.

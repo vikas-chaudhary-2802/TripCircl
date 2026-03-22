@@ -7,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
-import { lovable } from "@/integrations/lovable/index";
 import tripcirclLogo from "@/assets/tripcircl-logo.png";
 import {
   Dialog,
@@ -61,8 +60,11 @@ const Signup = () => {
   };
 
   const handleGoogleSignup = async () => {
-    const { error } = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin + "/ai-planner",
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: {
+        redirectTo: window.location.origin + "/ai-planner",
+      }
     });
     if (error) toast({ title: "Error", description: error.message, variant: "destructive" });
   };

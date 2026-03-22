@@ -6,7 +6,7 @@ import {
   ChevronRight, Clock, Lightbulb, UtensilsCrossed, Compass, ArrowRight, Globe,
   Sun, Sunset, Moon, Backpack, MessageCircle, Plane, Heart, Share2,
   Mountain, Camera, Star, Zap, ChevronDown, Coffee, Utensils, Footprints, Eye,
-  Download, Send, Twitter, Facebook
+  Download, Send, Twitter, Facebook, Map
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -841,6 +841,7 @@ const AIPlanner = () => {
   const [searchParams] = useSearchParams();
   const resultRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
   const [refineInput, setRefineInput] = useState("");
 
@@ -888,6 +889,14 @@ const AIPlanner = () => {
       setTimeout(() => resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }), 300);
     }
   }, [loading, result]);
+
+  // Auto-scroll to form top when moving to next step
+  useEffect(() => {
+    if (formStep > 1 && formRef.current) {
+      const y = formRef.current.getBoundingClientRect().top + window.scrollY - 120; // offset for sticky navbar
+      window.scrollTo({ top: y, behavior: "smooth" });
+    }
+  }, [formStep]);
 
   const toggleInterest = useCallback((tag: string) => {
     setInterests((prev) => prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]);
@@ -1110,7 +1119,7 @@ const AIPlanner = () => {
         </div>
       </motion.div>
 
-      <div className="container-max px-4 pb-20">
+      <div ref={formRef} className="container-max px-4 pb-20">
         <div className="mx-auto max-w-4xl">
 
           {/* ─── Multi-Step Form ─── */}

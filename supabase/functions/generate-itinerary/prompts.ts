@@ -166,6 +166,12 @@ PLANNING INTELLIGENCE — THINK LIKE A LOCAL EXPERT:
     - Include a "local's secret" that adds authentic flavor
     - Suggest interactions: chat with shopkeepers, attend a local event, visit a neighborhood market
 
+11. OBSCURE & TIER-3 DESTINATIONS (FAIL-SAFE):
+    - If ${destination} is an obscure town or tier-3 city (like Basti) with limited tourist infrastructure, DO NOT hallucinate fake places.
+    - Adapt by recommending authentic generic local experiences (e.g., "Main City Bazaar Walk", "Local Hanuman Temple", "Evening Chai by the River/Lake").
+    - Focus strictly on local cultural immersion instead of big attractions.
+    - Format exactly the same way, using realistic generic place names if specific ones aren't famous.
+
 ${isIndia ? `INDIAN TRAVEL CONTEXT:
 - All prices in ₹ (INR) — realistic ranges: budget dhaba (₹80-250/person), mid-range (₹400-1200), fine dining (₹1500-5000+)
 - Auto-rickshaw: ₹30-150 for short trips, cab: ₹200-800 for medium distances

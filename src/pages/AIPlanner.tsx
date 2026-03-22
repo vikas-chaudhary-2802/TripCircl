@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import {
   Sparkles, MapPin, Calendar, DollarSign, Users, Wand2, RotateCcw, Copy, Check,
@@ -14,6 +14,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
+import { useAuth } from "@/contexts/AuthContext";
 import ReactMarkdown from "react-markdown";
 
 /* ─── Constants ─── */
@@ -805,8 +806,8 @@ const StepIndicator = ({ step }: { step: number }) => (
 );
 
 /* ─── Trip DNA Card ─── */
-const TripDNA = ({ destination, country, travelStyle, tripPace, placeType, budget, travelers, interests, startDate, endDate }: {
-  destination: string; country: string; travelStyle: string; tripPace: string; placeType: string;
+const TripDNA = ({ destination, country, travelStyles, tripPace, placeType, budget, travelers, interests, startDate, endDate }: {
+  destination: string; country: string; travelStyles: string[]; tripPace: string; placeType: string;
   budget: string; travelers: string; interests: string[]; startDate: string; endDate: string;
 }) => (
   <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
@@ -826,7 +827,9 @@ const TripDNA = ({ destination, country, travelStyle, tripPace, placeType, budge
       </span>
       {tripPace && <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">{tripPace === "Relaxed" ? "🧘" : tripPace === "Fast-paced" ? "⚡" : "🚶"} {tripPace}</span>}
       {placeType && <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-3 py-1.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400">{placeType === "Hidden gems" ? "💎" : placeType === "Must-visit attractions" ? "📸" : "✨"} {placeType}</span>}
-      {travelStyle && <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent">{travelStyle}</span>}
+      {travelStyles.map(style => (
+        <span key={style} className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent">{style}</span>
+      ))}
       {budget && <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">₹{budget}</span>}
       {travelers && <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1.5 text-xs font-semibold text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"><Users className="h-3 w-3" /> {travelers}</span>}
       {startDate && endDate && <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1.5 text-xs font-semibold text-muted-foreground"><Calendar className="h-3 w-3" /> {startDate} → {endDate}</span>}
@@ -837,6 +840,8 @@ const TripDNA = ({ destination, country, travelStyle, tripPace, placeType, budge
 
 /* ─── Main Page ─── */
 const AIPlanner = () => {
+  const { user, loading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const resultRef = useRef<HTMLDivElement>(null);
@@ -851,7 +856,7 @@ const AIPlanner = () => {
   const [endDate, setEndDate] = useState("");
   const [budget, setBudget] = useState("");
   const [travelers, setTravelers] = useState("");
-  const [travelStyle, setTravelStyle] = useState("");
+  const [travelStyles, setTravelStyles] = useState<string[]>([]);
   const [tripPace, setTripPace] = useState("Moderate");
   const [placeType, setPlaceType] = useState("Mix of both");
   const [interests, setInterests] = useState<string[]>([]);
@@ -862,6 +867,14 @@ const AIPlanner = () => {
   const [result, setResult] = useState("");
   const [generationDone, setGenerationDone] = useState(false);
   const [activeDay, setActiveDay] = useState<number | null>(null);
+
+  /* ─── Auth Guard ─── */
+  useEffect(() => {
+    if (!authLoading && !user) {
+      toast({ title: "Login Required", description: "You must be logged in to use the AI Planner.", variant: "default" });
+      navigate("/login");
+    }
+  }, [user, authLoading, navigate, toast]);
 
   /* ─── Read destination from URL (homepage search) ─── */
   useEffect(() => {
@@ -934,7 +947,7 @@ const AIPlanner = () => {
         body: JSON.stringify({
           destination, country,
           startDate: startDate || undefined, endDate: endDate || undefined,
-          travelStyle: travelStyle || undefined, budget: budget || undefined,
+          travelStyle: travelStyles.length > 0 ? travelStyles.join(", ") : undefined, budget: budget || undefined,
           travelers: travelers || undefined,
           interests: interests.length > 0 ? interests.join(", ") : undefined,
           prompt: extraPrompt || undefined,
@@ -1014,7 +1027,7 @@ const AIPlanner = () => {
   const handleReset = () => {
     setResult(""); setGenerationDone(false); setActiveDay(null); setFormStep(1);
     setDestination(""); setCountry(""); setStartDate(""); setEndDate("");
-    setBudget(""); setTravelers(""); setTravelStyle(""); setInterests([]); setExtraPrompt("");
+    setBudget(""); setTravelers(""); setTravelStyles([]); setInterests([]); setExtraPrompt("");
     setTripPace("Moderate"); setPlaceType("Mix of both"); setRefineInput("");
   };
 
@@ -1034,6 +1047,9 @@ const AIPlanner = () => {
   }, [result, sections]);
 
   const canProceedStep1 = destination.length > 0;
+  const canProceedStep2 = startDate && endDate && budget && travelers;
+  const canProceedStep3 = travelStyles.length > 0;
+  const canProceedStep4 = tripPace && placeType;
 
   return (
     <div className="min-h-screen bg-background overflow-x-hidden">
@@ -1250,11 +1266,11 @@ const AIPlanner = () => {
                           </div>
                         </div>
 
-                        <p className="mt-4 text-xs text-muted-foreground">All fields are optional — skip if you're flexible.</p>
+                        <p className="mt-4 text-xs font-medium text-amber-500">All fields are required to craft the perfect itinerary.</p>
 
                         <div className="mt-6 flex justify-between">
                           <Button variant="ghost" onClick={() => setFormStep(1)} className="gap-2 rounded-xl">Back</Button>
-                          <Button onClick={() => setFormStep(3)} variant="default" className="gap-2 rounded-xl">
+                          <Button onClick={() => setFormStep(3)} disabled={!canProceedStep2} variant="default" className="gap-2 rounded-xl">
                             Next: Travel Style <ArrowRight className="h-4 w-4" />
                           </Button>
                         </div>
@@ -1280,9 +1296,9 @@ const AIPlanner = () => {
                             return (
                               <motion.button key={style.name} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
                                 transition={{ delay: 0.03 * i }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                                onClick={() => setTravelStyle(travelStyle === style.name ? "" : style.name)}
+                                onClick={() => setTravelStyles(prev => prev.includes(style.name) ? prev.filter(s => s !== style.name) : [...prev, style.name])}
                                 className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-all duration-300 ${
-                                  travelStyle === style.name
+                                  travelStyles.includes(style.name)
                                     ? "border-secondary bg-secondary/5 shadow-md ring-1 ring-secondary/20"
                                     : "border-border hover:border-secondary/30 hover:shadow-sm"
                                 }`}>
@@ -1300,7 +1316,7 @@ const AIPlanner = () => {
 
                         <div className="mt-6 flex justify-between">
                           <Button variant="ghost" onClick={() => setFormStep(2)} className="gap-2 rounded-xl">Back</Button>
-                          <Button onClick={() => setFormStep(4)} variant="default" className="gap-2 rounded-xl">
+                          <Button onClick={() => setFormStep(4)} disabled={!canProceedStep3} variant="default" className="gap-2 rounded-xl">
                             Next: Pace & Places <ArrowRight className="h-4 w-4" />
                           </Button>
                         </div>
@@ -1376,7 +1392,7 @@ const AIPlanner = () => {
 
                         <div className="mt-6 flex justify-between">
                           <Button variant="ghost" onClick={() => setFormStep(3)} className="gap-2 rounded-xl">Back</Button>
-                          <Button onClick={() => setFormStep(5)} variant="default" className="gap-2 rounded-xl">
+                          <Button onClick={() => setFormStep(5)} disabled={!canProceedStep4} variant="default" className="gap-2 rounded-xl">
                             Next: Review <ArrowRight className="h-4 w-4" />
                           </Button>
                         </div>
@@ -1398,7 +1414,7 @@ const AIPlanner = () => {
 
                         {/* Trip DNA card */}
                         <TripDNA
-                          destination={destination} country={country} travelStyle={travelStyle}
+                          destination={destination} country={country} travelStyles={travelStyles}
                           tripPace={tripPace} placeType={placeType} budget={budget}
                           travelers={travelers} interests={interests} startDate={startDate} endDate={endDate}
                         />

@@ -143,9 +143,9 @@ PLANNING INTELLIGENCE — THINK LIKE A LOCAL EXPERT:
    - If extreme heat: avoid outdoor activities 12-3 PM, suggest air-conditioned venues
    - If cold/winter: mention layering, warm café suggestions, indoor activities
 
-7. FOOD & DINING STRATEGY:
-   - 2+ food recommendations per day minimum — near sightseeing locations
-   - Breakfast near hotel, lunch near afternoon activities, dinner at a special venue
+7. FOOD & DINING STRATEGY (STRICT):
+   - EXACTLY 3 food recommendations per day: Breakfast (Morning), Lunch (Afternoon), Dinner (Evening).
+   - STRICT BUDGET COMPLIANCE: The total cost of these 3 meals must rigorously fit within the food portion (~25%) of the daily budget per person. DO NOT suggest expensive fine dining if the user restricts the budget.
    - Consider dietary preferences if mentioned
    - Include at least 1 hidden gem food spot per day that tourists typically miss
    - Mention peak dining hours and reservation necessity
@@ -186,29 +186,43 @@ FORMAT — follow EXACTLY:
 
 Start with a vivid 2-3 sentence intro that captures the SOUL of ${destination}. Use sensory language.
 
+## 🏨 Recommended Accommodation
+Suggest 1 specific, verifiable Hotel/Hostel/Resort that perfectly fits the vibe and budget of this trip.
+**[REAL Hotel Name]** — [1-2 sentences on why it fits perfectly]
+📍 [Neighborhood/Area]
+💰 ${currencySymbol}[Approx cost per night]
+
 For EACH day:
 
 ## Day 1: [Evocative Theme — e.g., "The Golden City Awakens" not "Exploring Jaipur"]
 
 ### 🌅 Morning
 
+🍽️ **Breakfast: [REAL Restaurant/Café Name]** — [1-2 sentences about the must-order item.]
+📍 [Real Address/Area]
+💰 ${currencySymbol}[Cost per person]
+
 **[REAL Place Name]** — [2-3 sentences: vivid description with sensory details. What makes this unmissable.]
 📍 [Exact Location/Area, Landmark nearby]
-⏰ [Time range, e.g., 6:30 AM – 8:30 AM]
+⏰ [Time range, e.g., 9:30 AM – 11:30 AM]
 💰 ${currencySymbol}[Cost per person]
-🚗 [Travel from previous point, e.g., "15 min auto from hotel"]
-
-🍽️ **[REAL Restaurant/Café Name]** — [What makes it legendary. The must-order dish described vividly.]
-📍 [Real Address/Area]
-💰 ${currencySymbol}[Cost per person for a full meal]
+🚗 [Travel from previous point, e.g., "15 min walk from breakfast"]
 
 ### ☀️ Afternoon
 
-(Same detailed format — every activity needs 📍⏰💰🚗 each on its OWN line)
+🍽️ **Lunch: [REAL Restaurant Name]** — [What makes it legendary. The must-order dish described vividly.]
+📍 [Real Address/Area]
+💰 ${currencySymbol}[Cost per person]
+
+(Include afternoon activities following the exact same format as morning activities: name, description, 📍 location, ⏰ time, 💰 cost, 🚗 travel time)
 
 ### 🌙 Evening
 
-(Same format — evening should feel SPECIAL: golden hour spots, fine dining, cultural performances)
+🍽️ **Dinner: [REAL Restaurant/Bar Name]** — [Vivid description of the dinner vibe and food.]
+📍 [Real Address/Area]
+💰 ${currencySymbol}[Cost per person]
+
+(Include evening activities following the exact same format: name, description, 📍 location, ⏰ time, 💰 cost, 🚗 travel time)
 
 > 💡 **Pro Tip:** [Genuinely useful insider tip — specific timing trick, secret viewpoint, bargaining advice]
 

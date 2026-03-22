@@ -39,6 +39,7 @@ const ProfilePage = () => {
     loadProfile(targetId);
     loadTrips(targetId);
     loadRatings(targetId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId, user]);
 
   const loadProfile = async (uid: string) => {

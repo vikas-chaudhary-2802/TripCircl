@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect, useMemo, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import {
   Sparkles, MapPin, Calendar, DollarSign, Users, Wand2, RotateCcw, Copy, Check,
@@ -44,6 +45,16 @@ const INTEREST_TAGS = [
   "Chai trails", "Sunrise spots", "Trekking", "Cooking classes", "Temple visits",
   "Wildlife safari", "Houseboat stays", "Palace tours", "Festivals", "Handicrafts",
 ];
+const TRIP_PACES = [
+  { name: "Relaxed", icon: Coffee, desc: "2-3 places/day, chill vibe", gradient: "from-amber-400 to-orange-400" },
+  { name: "Moderate", icon: Footprints, desc: "3-4 places/day, balanced", gradient: "from-blue-400 to-cyan-500" },
+  { name: "Fast-paced", icon: Zap, desc: "4-6 places/day, action-packed", gradient: "from-rose-500 to-pink-600" },
+];
+const PLACE_TYPES = [
+  { name: "Must-visit attractions", icon: Camera, desc: "Top iconic landmarks", gradient: "from-indigo-500 to-purple-500" },
+  { name: "Hidden gems", icon: Compass, desc: "Offbeat & secret places", gradient: "from-emerald-500 to-teal-500" },
+  { name: "Mix of both", icon: Star, desc: "Icons + Local secrets", gradient: "from-amber-500 to-orange-500" },
+];
 
 /* ─── Destination images for day headers ─── */
 const DAY_IMAGES = [
@@ -81,7 +92,7 @@ function parseSections(text: string): Section[] {
         content: trimmed.replace(/^## Day \d+\s*[:\-–—]?\s*.*\n?/, "").trim(),
       });
     } else if (sections.length === 0) {
-      if (/^## [🎒💡💰]/.test(trimmed)) {
+      if (/^## [🎒💡💰]/u.test(trimmed)) {
         sections.push({ type: "extras", content: trimmed });
       } else {
         // Clean intro: remove trailing --- or horizontal rules
@@ -384,13 +395,7 @@ const TimeBlockCard = ({ period, content, dayIndex }: { period: keyof typeof per
         <div>
           <span className="text-lg font-extrabold text-foreground tracking-tight">{config.emoji} {config.label}</span>
         </div>
-        <div className="ml-auto flex items-center gap-2">
-          <motion.div
-            animate={{ scale: [1, 1.3, 1], opacity: [0.5, 1, 0.5] }}
-            transition={{ duration: 2.5, repeat: Infinity, delay: dayIndex * 0.3 }}
-            className={`h-2.5 w-2.5 rounded-full ${config.iconBg} shadow-sm`}
-          />
-        </div>
+        <div className="ml-auto flex items-center gap-2" />
       </div>
 
       {/* Content */}
@@ -414,7 +419,7 @@ const dayGradients = [
 ];
 
 const DayCard = ({ section, index }: { section: Section; index: number }) => {
-  const [expanded, setExpanded] = useState(true);
+  const [expanded, setExpanded] = useState(false);
   const [liked, setLiked] = useState(false);
   const gradientColor = dayGradients[(section.dayNum || index) % dayGradients.length];
   const dayImage = DAY_IMAGES[(section.dayNum || index) % DAY_IMAGES.length];
@@ -530,6 +535,29 @@ const DayCard = ({ section, index }: { section: Section; index: number }) => {
             </div>
 
             {/* Card Content */}
+            {/* Preview snippet when collapsed */}
+            {!expanded && (
+              <div className="px-5 py-4 md:px-7">
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                  {timeBlocks.length > 0 ? (
+                    <>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">
+                        🌅 Morning
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2.5 py-1 text-[11px] font-semibold text-orange-700 dark:bg-orange-500/10 dark:text-orange-400">
+                        ☀️ Afternoon
+                      </span>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] font-semibold text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400">
+                        🌙 Evening
+                      </span>
+                      <span className="ml-auto text-xs text-secondary font-semibold cursor-pointer hover:underline" onClick={() => setExpanded(true)}>Expand →</span>
+                    </>
+                  ) : (
+                    <span className="text-xs line-clamp-2">{section.content.slice(0, 150)}...</span>
+                  )}
+                </div>
+              </div>
+            )}
             <AnimatePresence initial={false}>
               {expanded && (
                 <motion.div
@@ -620,7 +648,7 @@ const LoadingExperience = ({ destination }: { destination: string }) => {
   useEffect(() => {
     const timer = setInterval(() => setPhraseIdx((p) => (p + 1) % loadingPhrases.length), 2800);
     return () => clearInterval(timer);
-  }, []);
+  }, [loadingPhrases.length]);
   useEffect(() => {
     const timer = setInterval(() => setProgress((p) => Math.min(p + 0.8, 92)), 200);
     return () => clearInterval(timer);
@@ -750,36 +778,71 @@ const DayNav = ({ sections, activeDay, onSelect }: { sections: Section[]; active
   );
 };
 
-/* ─── Step indicator ─── */
+/* ─── Step indicator (5 steps) ─── */
+const STEP_LABELS = ["Destination", "Dates", "Style", "Vibe", "Review"];
 const StepIndicator = ({ step }: { step: number }) => (
-  <div className="flex items-center gap-3 mb-8">
-    {[1, 2, 3].map((s) => (
-      <div key={s} className="flex items-center gap-2">
-        <motion.div
-          className={`flex h-8 w-8 items-center justify-center rounded-full text-xs font-bold transition-all duration-500 ${
-            s === step ? "bg-secondary text-secondary-foreground shadow-lg" :
-            s < step ? "bg-secondary/20 text-secondary" : "bg-muted text-muted-foreground"
-          }`}
-          animate={s === step ? { scale: [1, 1.1, 1] } : {}}
-          transition={{ duration: 2, repeat: Infinity }}
-        >
-          {s < step ? <Check className="h-4 w-4" /> : s}
-        </motion.div>
-        <span className={`text-xs font-medium hidden sm:block ${s === step ? "text-foreground" : "text-muted-foreground"}`}>
-          {s === 1 ? "Destination" : s === 2 ? "Preferences" : "Generate"}
-        </span>
-        {s < 3 && <div className={`h-px w-8 transition-colors duration-500 ${s < step ? "bg-secondary" : "bg-border"}`} />}
-      </div>
-    ))}
+  <div className="flex items-center gap-1 mb-8">
+    {STEP_LABELS.map((label, i) => {
+      const s = i + 1;
+      return (
+        <div key={s} className="flex items-center gap-1.5">
+          <motion.div
+            className={`flex h-7 w-7 items-center justify-center rounded-full text-[10px] font-bold transition-all duration-500 ${
+              s === step ? "bg-secondary text-secondary-foreground shadow-md" :
+              s < step ? "bg-secondary/20 text-secondary" : "bg-muted text-muted-foreground"
+            }`}
+          >
+            {s < step ? <Check className="h-3.5 w-3.5" /> : s}
+          </motion.div>
+          <span className={`text-[11px] font-medium hidden sm:block ${s === step ? "text-foreground" : "text-muted-foreground"}`}>
+            {label}
+          </span>
+          {s < 5 && <div className={`h-px w-4 sm:w-6 transition-colors duration-500 ${s < step ? "bg-secondary" : "bg-border"}`} />}
+        </div>
+      );
+    })}
   </div>
+);
+
+/* ─── Trip DNA Card ─── */
+const TripDNA = ({ destination, country, travelStyle, tripPace, placeType, budget, travelers, interests, startDate, endDate }: {
+  destination: string; country: string; travelStyle: string; tripPace: string; placeType: string;
+  budget: string; travelers: string; interests: string[]; startDate: string; endDate: string;
+}) => (
+  <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }}
+    className="rounded-2xl border border-secondary/20 bg-gradient-to-br from-secondary/5 via-card to-accent/5 p-6 mb-6">
+    <div className="flex items-center gap-2 mb-4">
+      <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary/10">
+        <Sparkles className="h-4 w-4 text-secondary" />
+      </div>
+      <div>
+        <p className="text-sm font-bold text-foreground">Your Trip Profile</p>
+        <p className="text-[10px] text-muted-foreground">AI will personalize everything to match you</p>
+      </div>
+    </div>
+    <div className="flex flex-wrap gap-2">
+      <span className="inline-flex items-center gap-1 rounded-full bg-secondary/10 px-3 py-1.5 text-xs font-semibold text-secondary">
+        <MapPin className="h-3 w-3" /> {destination}{country ? `, ${country}` : ""}
+      </span>
+      {tripPace && <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-3 py-1.5 text-xs font-semibold text-amber-700 dark:bg-amber-500/10 dark:text-amber-400">{tripPace === "Relaxed" ? "🧘" : tripPace === "Fast-paced" ? "⚡" : "🚶"} {tripPace}</span>}
+      {placeType && <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-3 py-1.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-500/10 dark:text-indigo-400">{placeType === "Hidden gems" ? "💎" : placeType === "Must-visit attractions" ? "📸" : "✨"} {placeType}</span>}
+      {travelStyle && <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-3 py-1.5 text-xs font-semibold text-accent">{travelStyle}</span>}
+      {budget && <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-3 py-1.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">₹{budget}</span>}
+      {travelers && <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-3 py-1.5 text-xs font-semibold text-blue-700 dark:bg-blue-500/10 dark:text-blue-400"><Users className="h-3 w-3" /> {travelers}</span>}
+      {startDate && endDate && <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1.5 text-xs font-semibold text-muted-foreground"><Calendar className="h-3 w-3" /> {startDate} → {endDate}</span>}
+      {interests.length > 0 && <span className="inline-flex items-center gap-1 rounded-full bg-rose-100 px-3 py-1.5 text-xs font-semibold text-rose-700 dark:bg-rose-500/10 dark:text-rose-400"><Heart className="h-3 w-3" /> {interests.length} interests</span>}
+    </div>
+  </motion.div>
 );
 
 /* ─── Main Page ─── */
 const AIPlanner = () => {
   const { toast } = useToast();
+  const [searchParams] = useSearchParams();
   const resultRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const [copied, setCopied] = useState(false);
+  const [refineInput, setRefineInput] = useState("");
 
   const [destination, setDestination] = useState("");
   const [country, setCountry] = useState("");
@@ -788,6 +851,8 @@ const AIPlanner = () => {
   const [budget, setBudget] = useState("");
   const [travelers, setTravelers] = useState("");
   const [travelStyle, setTravelStyle] = useState("");
+  const [tripPace, setTripPace] = useState("Moderate");
+  const [placeType, setPlaceType] = useState("Mix of both");
   const [interests, setInterests] = useState<string[]>([]);
   const [extraPrompt, setExtraPrompt] = useState("");
 
@@ -796,6 +861,21 @@ const AIPlanner = () => {
   const [result, setResult] = useState("");
   const [generationDone, setGenerationDone] = useState(false);
   const [activeDay, setActiveDay] = useState<number | null>(null);
+
+  /* ─── Read destination from URL (homepage search) ─── */
+  useEffect(() => {
+    const dest = searchParams.get("destination");
+    const surprise = searchParams.get("surprise");
+    if (dest) {
+      setDestination(dest);
+      // Try to auto-detect country for popular Indian destinations
+      const indianDests = /goa|jaipur|kerala|manali|rishikesh|udaipur|ladakh|mumbai|delhi|bangalore|hyderabad|chennai|hampi|spiti|pondicherry|coorg|meghalaya|andaman|pushkar|alleppey|darjeeling|rann of kutch/i;
+      if (indianDests.test(dest)) setCountry("India");
+      if (surprise === "true") setFormStep(2);
+      else setFormStep(2);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const sections = useMemo(() => parseSections(result), [result]);
 
@@ -849,6 +929,8 @@ const AIPlanner = () => {
           travelers: travelers || undefined,
           interests: interests.length > 0 ? interests.join(", ") : undefined,
           prompt: extraPrompt || undefined,
+          tripPace,
+          placeType,
         }),
       });
 
@@ -924,6 +1006,14 @@ const AIPlanner = () => {
     setResult(""); setGenerationDone(false); setActiveDay(null); setFormStep(1);
     setDestination(""); setCountry(""); setStartDate(""); setEndDate("");
     setBudget(""); setTravelers(""); setTravelStyle(""); setInterests([]); setExtraPrompt("");
+    setTripPace("Moderate"); setPlaceType("Mix of both"); setRefineInput("");
+  };
+
+  const handleRefine = () => {
+    if (!refineInput) return;
+    setExtraPrompt(refineInput);
+    setRefineInput("");
+    handleGenerate();
   };
 
   const stats = useMemo(() => {
@@ -1124,21 +1214,21 @@ const AIPlanner = () => {
                         transition={{ duration: 0.3 }} className="p-6 md:p-8">
                         <div className="flex items-center gap-3 mb-6">
                           <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent/10">
-                            <Compass className="h-5 w-5 text-accent" />
+                            <Calendar className="h-5 w-5 text-accent" />
                           </div>
                           <div>
-                            <h2 className="text-xl font-bold text-foreground">Customize your trip</h2>
-                            <p className="text-sm text-muted-foreground">Dates, budget, and travel style</p>
+                            <h2 className="text-xl font-bold text-foreground">When are you going?</h2>
+                            <p className="text-sm text-muted-foreground">Set your travel dates and budget</p>
                           </div>
                         </div>
 
-                        <div className="grid gap-4 md:grid-cols-4">
+                        <div className="grid gap-4 md:grid-cols-2">
                           <div>
-                            <label className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground"><Calendar className="h-3.5 w-3.5 text-secondary" /> Start</label>
+                            <label className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground"><Calendar className="h-3.5 w-3.5 text-secondary" /> Start Date</label>
                             <Input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} className="h-12 rounded-xl" />
                           </div>
                           <div>
-                            <label className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground"><Calendar className="h-3.5 w-3.5 text-muted-foreground" /> End</label>
+                            <label className="mb-2 flex items-center gap-2 text-sm font-medium text-foreground"><Calendar className="h-3.5 w-3.5 text-muted-foreground" /> End Date</label>
                             <Input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} className="h-12 rounded-xl" />
                           </div>
                           <div>
@@ -1151,37 +1241,12 @@ const AIPlanner = () => {
                           </div>
                         </div>
 
-                        <div className="mt-6">
-                          <label className="mb-3 block text-sm font-medium text-foreground">Travel Style</label>
-                          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                            {TRAVEL_STYLES.map((style, i) => {
-                              const StyleIcon = style.icon;
-                              return (
-                                <motion.button key={style.name} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-                                  transition={{ delay: 0.03 * i }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
-                                  onClick={() => setTravelStyle(travelStyle === style.name ? "" : style.name)}
-                                  className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-all duration-300 ${
-                                    travelStyle === style.name
-                                      ? "border-secondary bg-secondary/5 shadow-md ring-1 ring-secondary/20"
-                                      : "border-border hover:border-secondary/30 hover:shadow-sm"
-                                  }`}>
-                                  <div className={`flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br ${style.gradient} shadow-sm`}>
-                                    <StyleIcon className="h-4 w-4 text-white" />
-                                  </div>
-                                  <div>
-                                    <p className="text-sm font-semibold text-foreground">{style.name}</p>
-                                    <p className="text-[10px] text-muted-foreground">{style.desc}</p>
-                                  </div>
-                                </motion.button>
-                              );
-                            })}
-                          </div>
-                        </div>
+                        <p className="mt-4 text-xs text-muted-foreground">All fields are optional — skip if you're flexible.</p>
 
                         <div className="mt-6 flex justify-between">
                           <Button variant="ghost" onClick={() => setFormStep(1)} className="gap-2 rounded-xl">Back</Button>
                           <Button onClick={() => setFormStep(3)} variant="default" className="gap-2 rounded-xl">
-                            Next: Interests <ArrowRight className="h-4 w-4" />
+                            Next: Travel Style <ArrowRight className="h-4 w-4" />
                           </Button>
                         </div>
                       </motion.div>
@@ -1191,71 +1256,173 @@ const AIPlanner = () => {
                       <motion.div key="step3" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
                         transition={{ duration: 0.3 }} className="p-6 md:p-8">
                         <div className="flex items-center gap-3 mb-6">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/10">
-                            <Heart className="h-5 w-5 text-secondary" />
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-500/10">
+                            <Compass className="h-5 w-5 text-violet-600" />
                           </div>
                           <div>
-                            <h2 className="text-xl font-bold text-foreground">What interests you?</h2>
-                            <p className="text-sm text-muted-foreground">Select all that excite you (optional)</p>
+                            <h2 className="text-xl font-bold text-foreground">How do you like to travel?</h2>
+                            <p className="text-sm text-muted-foreground">Pick a style that matches your vibe</p>
                           </div>
                         </div>
 
-                        <div className="flex flex-wrap gap-2 mb-6">
-                          {INTEREST_TAGS.map((tag, i) => (
-                            <motion.button key={tag} initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }}
-                              transition={{ delay: 0.02 * i }} whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}
-                              onClick={() => toggleInterest(tag)}
-                              className={`rounded-full border px-4 py-2 text-sm font-medium transition-all duration-300 ${
-                                interests.includes(tag)
-                                  ? "border-accent bg-accent/10 text-accent shadow-sm"
-                                  : "border-border text-muted-foreground hover:border-accent/40 hover:text-foreground"
-                              }`}>
-                              {tag}
-                            </motion.button>
-                          ))}
+                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                          {TRAVEL_STYLES.map((style, i) => {
+                            const StyleIcon = style.icon;
+                            return (
+                              <motion.button key={style.name} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: 0.03 * i }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                                onClick={() => setTravelStyle(travelStyle === style.name ? "" : style.name)}
+                                className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-all duration-300 ${
+                                  travelStyle === style.name
+                                    ? "border-secondary bg-secondary/5 shadow-md ring-1 ring-secondary/20"
+                                    : "border-border hover:border-secondary/30 hover:shadow-sm"
+                                }`}>
+                                <div className={`flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br ${style.gradient} shadow-sm`}>
+                                  <StyleIcon className="h-4 w-4 text-white" />
+                                </div>
+                                <div>
+                                  <p className="text-sm font-semibold text-foreground">{style.name}</p>
+                                  <p className="text-[10px] text-muted-foreground">{style.desc}</p>
+                                </div>
+                              </motion.button>
+                            );
+                          })}
                         </div>
-
-                        <div>
-                          <label className="mb-2 block text-sm font-medium text-foreground">Anything else we should know?</label>
-                          <Textarea placeholder="e.g., 'Celebrating anniversary', 'Traveling with kids', 'Vegetarian food only'..."
-                            value={extraPrompt} onChange={(e) => setExtraPrompt(e.target.value)}
-                            className="min-h-[80px] resize-none rounded-xl" />
-                        </div>
-
-                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.2 }}
-                          className="mt-6 rounded-xl border border-dashed border-secondary/20 bg-secondary/5 p-4">
-                          <p className="text-xs font-medium text-muted-foreground mb-2">Trip Summary</p>
-                          <div className="flex flex-wrap gap-2">
-                            <span className="inline-flex items-center gap-1 rounded-full bg-secondary/10 px-3 py-1 text-xs font-medium text-secondary">
-                              <MapPin className="h-3 w-3" /> {destination}{country ? `, ${country}` : ""}
-                            </span>
-                            {travelStyle && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-accent/10 px-3 py-1 text-xs font-medium text-accent">{travelStyle}</span>
-                            )}
-                            {startDate && endDate && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-                                <Calendar className="h-3 w-3" /> {startDate} → {endDate}
-                              </span>
-                            )}
-                            {budget && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
-                                ₹ {budget}
-                              </span>
-                            )}
-                            {interests.length > 0 && (
-                              <span className="inline-flex items-center gap-1 rounded-full bg-muted px-3 py-1 text-xs font-medium text-muted-foreground">
-                                +{interests.length} interests
-                              </span>
-                            )}
-                          </div>
-                        </motion.div>
 
                         <div className="mt-6 flex justify-between">
                           <Button variant="ghost" onClick={() => setFormStep(2)} className="gap-2 rounded-xl">Back</Button>
+                          <Button onClick={() => setFormStep(4)} variant="default" className="gap-2 rounded-xl">
+                            Next: Pace & Places <ArrowRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {formStep === 4 && (
+                      <motion.div key="step4" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.3 }} className="p-6 md:p-8">
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-500/10">
+                            <Zap className="h-5 w-5 text-amber-600" />
+                          </div>
+                          <div>
+                            <h2 className="text-xl font-bold text-foreground">Set your trip vibe</h2>
+                            <p className="text-sm text-muted-foreground">Choose your pace and type of experiences</p>
+                          </div>
+                        </div>
+
+                        <div className="mb-6">
+                          <label className="mb-3 block text-sm font-medium text-foreground">Trip Pace</label>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            {TRIP_PACES.map((pace, i) => {
+                              const PaceIcon = pace.icon;
+                              return (
+                                <motion.button key={pace.name} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: 0.03 * i }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                                  onClick={() => setTripPace(pace.name)}
+                                  className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-all duration-300 ${
+                                    tripPace === pace.name
+                                      ? "border-secondary bg-secondary/5 shadow-md ring-1 ring-secondary/20"
+                                      : "border-border hover:border-secondary/30 hover:shadow-sm"
+                                  }`}>
+                                  <div className={`flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br ${pace.gradient} shadow-sm`}>
+                                    <PaceIcon className="h-4 w-4 text-white" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-semibold text-foreground">{pace.name}</p>
+                                    <p className="text-[10px] text-muted-foreground">{pace.desc}</p>
+                                  </div>
+                                </motion.button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div>
+                          <label className="mb-3 block text-sm font-medium text-foreground">Types of Places</label>
+                          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            {PLACE_TYPES.map((type, i) => {
+                              const TypeIcon = type.icon;
+                              return (
+                                <motion.button key={type.name} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
+                                  transition={{ delay: 0.03 * i }} whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                                  onClick={() => setPlaceType(type.name)}
+                                  className={`flex items-center gap-3 rounded-xl border p-3 text-left transition-all duration-300 ${
+                                    placeType === type.name
+                                      ? "border-secondary bg-secondary/5 shadow-md ring-1 ring-secondary/20"
+                                      : "border-border hover:border-secondary/30 hover:shadow-sm"
+                                  }`}>
+                                  <div className={`flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br ${type.gradient} shadow-sm`}>
+                                    <TypeIcon className="h-4 w-4 text-white" />
+                                  </div>
+                                  <div>
+                                    <p className="text-sm font-semibold text-foreground">{type.name}</p>
+                                    <p className="text-[10px] text-muted-foreground">{type.desc}</p>
+                                  </div>
+                                </motion.button>
+                              );
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="mt-6 flex justify-between">
+                          <Button variant="ghost" onClick={() => setFormStep(3)} className="gap-2 rounded-xl">Back</Button>
+                          <Button onClick={() => setFormStep(5)} variant="default" className="gap-2 rounded-xl">
+                            Next: Review <ArrowRight className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </motion.div>
+                    )}
+
+                    {formStep === 5 && (
+                      <motion.div key="step5" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.3 }} className="p-6 md:p-8">
+                        <div className="flex items-center gap-3 mb-6">
+                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary/10">
+                            <Sparkles className="h-5 w-5 text-secondary" />
+                          </div>
+                          <div>
+                            <h2 className="text-xl font-bold text-foreground">Review & Generate</h2>
+                            <p className="text-sm text-muted-foreground">Your Trip DNA — everything the AI will use</p>
+                          </div>
+                        </div>
+
+                        {/* Trip DNA card */}
+                        <TripDNA
+                          destination={destination} country={country} travelStyle={travelStyle}
+                          tripPace={tripPace} placeType={placeType} budget={budget}
+                          travelers={travelers} interests={interests} startDate={startDate} endDate={endDate}
+                        />
+
+                        {/* Interests (inline on review) */}
+                        <div className="mb-4">
+                          <label className="mb-2 block text-sm font-medium text-foreground">Interests (optional)</label>
+                          <div className="flex flex-wrap gap-1.5">
+                            {INTEREST_TAGS.map((tag) => (
+                              <button key={tag} onClick={() => toggleInterest(tag)}
+                                className={`rounded-full border px-3 py-1.5 text-xs font-medium transition-all duration-200 ${
+                                  interests.includes(tag)
+                                    ? "border-accent bg-accent/10 text-accent"
+                                    : "border-border text-muted-foreground hover:border-accent/40 hover:text-foreground"
+                                }`}>
+                                {tag}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Extra prompt */}
+                        <div className="mb-6">
+                          <label className="mb-2 block text-sm font-medium text-foreground">Anything else?</label>
+                          <Textarea placeholder="e.g., 'Traveling with kids', 'Anniversary trip', 'Vegetarian only'..."
+                            value={extraPrompt} onChange={(e) => setExtraPrompt(e.target.value)}
+                            className="min-h-[70px] resize-none rounded-xl" />
+                        </div>
+
+                        <div className="flex justify-between">
+                          <Button variant="ghost" onClick={() => setFormStep(4)} className="gap-2 rounded-xl">Back</Button>
                           <Button onClick={handleGenerate} disabled={loading || !destination} variant="hero" size="lg" className="gap-3 rounded-xl">
-                            <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }}>
-                              <Wand2 className="h-5 w-5" />
-                            </motion.div>
+                            <Wand2 className="h-5 w-5" />
                             Generate My Itinerary
                           </Button>
                         </div>
@@ -1354,6 +1521,59 @@ const AIPlanner = () => {
                   {/* Day nav pills */}
                   {sections.filter(s => s.type === "day").length > 1 && (
                     <DayNav sections={sections} activeDay={activeDay} onSelect={scrollToDay} />
+                  )}
+
+                  {/* ─── Trip at a Glance ─── */}
+                  {generationDone && sections.filter(s => s.type === "day").length > 0 && (
+                    <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
+                      className="mb-8 rounded-3xl border border-border bg-card p-5 md:p-6 shadow-sm">
+                      <div className="flex items-center justify-between mb-4">
+                        <div className="flex items-center gap-2">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-secondary/10">
+                            <Map className="h-4 w-4 text-secondary" />
+                          </div>
+                          <h3 className="text-sm font-bold text-foreground">Trip at a Glance</h3>
+                        </div>
+                        <button
+                          onClick={() => {
+                            const allCards = document.querySelectorAll('[data-day-card]');
+                            // Toggle all — if any are collapsed, expand all; else collapse all
+                            allCards.forEach(el => el.dispatchEvent(new CustomEvent('toggle-expand')));
+                          }}
+                          className="text-xs font-semibold text-secondary hover:underline"
+                        >
+                          Click days below to explore ↓
+                        </button>
+                      </div>
+                      <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                        {sections.filter(s => s.type === "day").map((s, i) => (
+                          <motion.button
+                            key={s.dayNum}
+                            initial={{ opacity: 0, y: 10 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.05 }}
+                            whileHover={{ scale: 1.02, y: -2 }}
+                            whileTap={{ scale: 0.98 }}
+                            onClick={() => scrollToDay(s.dayNum!)}
+                            className="flex items-center gap-3 rounded-xl border border-border bg-gradient-to-r from-card to-muted/30 p-3 text-left transition-all hover:shadow-md hover:border-secondary/30"
+                          >
+                            <div className={`flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-xl bg-gradient-to-br ${dayGradients[(s.dayNum || i) % dayGradients.length]} text-white text-sm font-bold shadow-md`}>
+                              {s.dayNum}
+                            </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-bold text-foreground truncate">{s.title || `Day ${s.dayNum}`}</p>
+                              <p className="text-[10px] text-muted-foreground mt-0.5">
+                                {parseTimeBlocks(s.content).length > 0
+                                  ? `${parseTimeBlocks(s.content).length} time blocks`
+                                  : "Detailed plan inside"
+                                }
+                              </p>
+                            </div>
+                            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground flex-shrink-0" />
+                          </motion.button>
+                        ))}
+                      </div>
+                    </motion.div>
                   )}
 
                   {/* Intro section */}
@@ -1476,6 +1696,42 @@ const AIPlanner = () => {
           </div>
         </div>
       </div>
+
+      {/* ─── Sticky Floating Refine Bar ─── */}
+      <AnimatePresence>
+        {generationDone && result && !loading && (
+          <motion.div
+            initial={{ y: 100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: 100, opacity: 0 }}
+            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+            className="fixed bottom-0 left-0 right-0 z-40 border-t border-border/60 bg-card/95 backdrop-blur-2xl shadow-[0_-8px_30px_-12px_rgba(0,0,0,0.15)]"
+          >
+            <div className="container-max px-4 py-3">
+              <div className="mx-auto max-w-4xl flex items-center gap-3">
+                <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-secondary/10 flex-shrink-0">
+                  <Wand2 className="h-4 w-4 text-secondary" />
+                </div>
+                <Input
+                  placeholder="Modify your plan... (e.g., 'Add more food spots on Day 2')"
+                  value={refineInput}
+                  onChange={(e) => setRefineInput(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Enter" && refineInput) handleRefine(); }}
+                  className="h-10 rounded-xl bg-background text-sm flex-1"
+                />
+                <Button
+                  onClick={handleRefine}
+                  disabled={!refineInput || loading}
+                  size="sm"
+                  className="rounded-xl gap-1.5 px-4 flex-shrink-0"
+                >
+                  <Sparkles className="h-3.5 w-3.5" /> Refine
+                </Button>
+              </div>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <Footer />
     </div>

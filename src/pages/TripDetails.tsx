@@ -41,6 +41,7 @@ const TripDetails = () => {
 
   useEffect(() => {
     if (id) loadTrip();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   useEffect(() => {

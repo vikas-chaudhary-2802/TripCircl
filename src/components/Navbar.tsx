@@ -8,9 +8,6 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const navLinks = [
   { to: "/ai-planner", label: "AI Planner", icon: Compass, badge: true },
-  { to: "/explore", label: "Discover", icon: Globe, comingSoon: true },
-  { to: "/create-trip", label: "Create", icon: Map, comingSoon: true },
-  { to: "/dashboard", label: "My Trips", icon: Brain, comingSoon: true },
 ];
 
 const Navbar = () => {
@@ -88,11 +85,7 @@ const Navbar = () => {
                     }`}
                   >
                     {link.label}
-                    {link.comingSoon && (
-                      <span className="ml-0.5 rounded-md bg-muted/80 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
-                        Soon
-                      </span>
-                    )}
+
                     {link.badge && (
                       <span className="relative flex h-2 w-2 ml-0.5">
                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
@@ -209,7 +202,7 @@ const Navbar = () => {
                       }`}>
                       <link.icon className="h-4 w-4 text-muted-foreground" />
                       {link.label}
-                      {link.comingSoon && <span className="ml-auto rounded-md bg-muted px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Soon</span>}
+
                       {link.badge && (
                         <span className="ml-auto relative flex h-2 w-2">
                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />

@@ -10,7 +10,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { destination, country, startDate, endDate, travelStyle, budget, travelers, interests, prompt } = await req.json();
+    const { destination, country, startDate, endDate, travelStyle, budget, travelers, interests, prompt, tripPace, placeType } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
 
@@ -30,12 +30,12 @@ serve(async (req) => {
     const styleInstructions = getStyleInstructions(travelStyle, totalBudget, numTravelers, currencySymbol, days);
 
     const systemPrompt = buildSystemPrompt({
-      destination, isIndia, days, numTravelers, totalBudget, perPersonBudget, dailyBudgetPerPerson, currencySymbol, styleInstructions,
+      destination, isIndia, days, numTravelers, totalBudget, perPersonBudget, dailyBudgetPerPerson, currencySymbol, styleInstructions, tripPace, placeType
     });
 
     const userPrompt = buildUserPrompt({
       days, destination, country, numTravelers, travelStyle, totalBudget, perPersonBudget, dailyBudgetPerPerson, currencySymbol,
-      interests: interests || "", prompt: prompt || "", startDate: startDate || "", endDate: endDate || "",
+      interests: interests || "", prompt: prompt || "", startDate: startDate || "", endDate: endDate || "", tripPace, placeType
     });
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {

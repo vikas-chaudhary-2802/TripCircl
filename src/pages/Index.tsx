@@ -1,7 +1,7 @@
-import { motion, useScroll, useTransform } from "framer-motion";
-import { useRef } from "react";
-import { Link } from "react-router-dom";
-import { Users, MapPin, Calendar, Shield, Star, ArrowRight, Globe, MessageCircle, Wallet, Compass, Sparkles, Mountain, Camera, Zap, Heart, ChevronRight, Map, Brain, Clock } from "lucide-react";
+import { motion, useScroll, useTransform, AnimatePresence } from "framer-motion";
+import { useRef, useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { Users, MapPin, Calendar, Shield, Star, ArrowRight, Globe, MessageCircle, Wallet, Compass, Sparkles, Mountain, Camera, Zap, Heart, ChevronRight, Map, Brain, Clock, Search, Shuffle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -17,19 +17,45 @@ const staggerContainer = {
   animate: { transition: { staggerChildren: 0.1 } }
 };
 
+/* ─── Micro-stories that rotate ─── */
+const microStories = [
+  "Priya went solo to Spiti. Came back with 6 new friends.",
+  "Arjun planned 5 days in Goa in 14 seconds with AI.",
+  "Neha's group split ₹45,000 across 6 people — effortlessly.",
+  "Rohan discovered a hidden waterfall in Meghalaya no guide knew about.",
+  "Ananya's Kerala houseboat plan was better than any travel agent's.",
+];
+
+/* ─── Destination suggestions for the hero search ─── */
+const HERO_SUGGESTIONS = [
+  { name: "Goa", emoji: "🏖️", tag: "Beaches & nightlife" },
+  { name: "Jaipur", emoji: "🏰", tag: "Heritage & culture" },
+  { name: "Kerala", emoji: "🌴", tag: "Backwaters & nature" },
+  { name: "Manali", emoji: "🏔️", tag: "Mountains & adventure" },
+  { name: "Rishikesh", emoji: "🧘", tag: "Spirituality & yoga" },
+  { name: "Udaipur", emoji: "🏯", tag: "Romance & lakes" },
+  { name: "Bali", emoji: "🌺", tag: "Tropical paradise" },
+  { name: "Ladakh", emoji: "⛰️", tag: "Raw & remote" },
+];
+
+const SURPRISE_DESTINATIONS = [
+  "Hampi", "Spiti Valley", "Pondicherry", "Coorg", "Meghalaya",
+  "Andaman Islands", "Pushkar", "Alleppey", "Darjeeling", "Rann of Kutch",
+];
+
 const features = [
   {
-    icon: Users,
-    title: "Smart Matching",
-    description: "Our algorithm pairs you with travelers who match your vibe, budget, and travel dates.",
+    icon: Brain,
+    title: "AI-Powered Planning",
+    description: "Get hyper-detailed itineraries with hidden gems, local food spots, and cost breakdowns — in seconds.",
     color: "text-violet-600",
     bg: "bg-violet-50 dark:bg-violet-500/10",
     border: "border-violet-200/60 dark:border-violet-500/20",
   },
   {
-    icon: Brain,
-    title: "AI Trip Planner",
-    description: "Get hyper-detailed itineraries with hidden gems, local food spots, and cost breakdowns in seconds.",
+    icon: Users,
+    title: "Smart Matching",
+    description: "Our algorithm pairs you with travelers who match your vibe, budget, and travel dates.",
     color: "text-blue-600",
     bg: "bg-blue-50 dark:bg-blue-500/10",
     border: "border-blue-200/60 dark:border-blue-500/20",
@@ -53,10 +79,10 @@ const features = [
 ];
 
 const steps = [
-  { number: "01", title: "Set Your Destination", description: "Pick where you want to go or let AI suggest the perfect spot based on your interests.", icon: MapPin, color: "text-violet-600", bg: "bg-violet-50 dark:bg-violet-500/10", border: "border-violet-200/60 dark:border-violet-500/20" },
-  { number: "02", title: "Find Your Tribe", description: "Get matched with like-minded travelers or invite friends to join your adventure.", icon: Users, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-500/10", border: "border-blue-200/60 dark:border-blue-500/20" },
-  { number: "03", title: "Plan Together", description: "Collaborate on itineraries, split costs, and coordinate every detail effortlessly.", icon: Calendar, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-500/10", border: "border-emerald-200/60 dark:border-emerald-500/20" },
-  { number: "04", title: "Experience It", description: "Hit the road with your crew. Create memories that last a lifetime.", icon: Mountain, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-500/10", border: "border-amber-200/60 dark:border-amber-500/20" },
+  { number: "01", title: "Tell Us Your Dream", description: "Pick where you want to go or let AI suggest the perfect spot based on your mood.", icon: Compass, color: "text-violet-600", bg: "bg-violet-50 dark:bg-violet-500/10", border: "border-violet-200/60 dark:border-violet-500/20" },
+  { number: "02", title: "Set Your Vibe", description: "Choose your pace, budget, and travel style. One tap at a time — like a conversation.", icon: Heart, color: "text-blue-600", bg: "bg-blue-50 dark:bg-blue-500/10", border: "border-blue-200/60 dark:border-blue-500/20" },
+  { number: "03", title: "AI Crafts Your Plan", description: "Get a detailed, day-by-day itinerary with hidden gems, food spots, and cost estimates.", icon: Brain, color: "text-emerald-600", bg: "bg-emerald-50 dark:bg-emerald-500/10", border: "border-emerald-200/60 dark:border-emerald-500/20" },
+  { number: "04", title: "Refine & Go", description: "Modify any part of your plan with a simple chat message. Then hit the road.", icon: Zap, color: "text-amber-600", bg: "bg-amber-50 dark:bg-amber-500/10", border: "border-amber-200/60 dark:border-amber-500/20" },
 ];
 
 const testimonials = [
@@ -93,108 +119,235 @@ const testimonials = [
 ];
 
 const destinations = [
-  { name: "Goa", image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=400&h=500&fit=crop", trips: "24 trips" },
-  { name: "Jaipur", image: "https://images.unsplash.com/photo-1477587458883-47145ed94245?w=400&h=500&fit=crop", trips: "18 trips" },
-  { name: "Kerala", image: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=400&h=500&fit=crop", trips: "31 trips" },
-  { name: "Ladakh", image: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=400&h=500&fit=crop", trips: "12 trips" },
+  { name: "Goa", image: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=400&h=500&fit=crop", trips: "24 trips", tag: "Beaches" },
+  { name: "Jaipur", image: "https://images.unsplash.com/photo-1477587458883-47145ed94245?w=400&h=500&fit=crop", trips: "18 trips", tag: "Heritage" },
+  { name: "Kerala", image: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=400&h=500&fit=crop", trips: "31 trips", tag: "Backwaters" },
+  { name: "Ladakh", image: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=400&h=500&fit=crop", trips: "12 trips", tag: "Mountains" },
 ];
+
+/* ─── Rotating Micro-Story Component ─── */
+const MicroStory = () => {
+  const [idx, setIdx] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => setIdx((p) => (p + 1) % microStories.length), 4000);
+    return () => clearInterval(timer);
+  }, []);
+  return (
+    <AnimatePresence mode="wait">
+      <motion.p
+        key={idx}
+        initial={{ opacity: 0, y: 12 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -12 }}
+        transition={{ duration: 0.4 }}
+        className="text-sm text-white/50 italic"
+      >
+        "{microStories[idx]}"
+      </motion.p>
+    </AnimatePresence>
+  );
+};
 
 const Index = () => {
   const heroRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
   const { scrollYProgress } = useScroll({ target: heroRef, offset: ["start start", "end start"] });
   const heroScale = useTransform(scrollYProgress, [0, 1], [1.05, 1.2]);
   const heroOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0]);
+
+  const [heroInput, setHeroInput] = useState("");
+  const [showSuggestions, setShowSuggestions] = useState(false);
+
+  const filteredSuggestions = HERO_SUGGESTIONS.filter((s) =>
+    s.name.toLowerCase().includes(heroInput.toLowerCase())
+  );
+
+  const handleHeroSearch = (destination?: string) => {
+    const dest = destination || heroInput;
+    if (dest) {
+      navigate(`/ai-planner?destination=${encodeURIComponent(dest)}`);
+    } else {
+      navigate("/ai-planner");
+    }
+  };
+
+  const handleSurpriseMe = () => {
+    const random = SURPRISE_DESTINATIONS[Math.floor(Math.random() * SURPRISE_DESTINATIONS.length)];
+    navigate(`/ai-planner?destination=${encodeURIComponent(random)}&surprise=true`);
+  };
 
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
 
-      {/* ─── Hero ─── */}
+      {/* ─── Premium Hero ─── */}
       <section ref={heroRef} className="relative flex min-h-screen items-center justify-center overflow-hidden">
-        <motion.div className="absolute inset-0" style={{ scale: heroScale }}>
-          <img src={heroImage} alt="Travelers exploring mountains at golden hour" className="h-full w-full object-cover" />
+        <motion.div className="absolute inset-0 origin-center" style={{ scale: heroScale }}>
+          <motion.div
+            className="h-full w-full"
+            animate={{ scale: [1, 1.15, 1], filter: ["brightness(1)", "brightness(1.15)", "brightness(1)"] }}
+            transition={{ duration: 20, repeat: Infinity, ease: "easeInOut" }}
+          >
+            <img src={heroImage} alt="Travelers exploring mountains at golden hour" className="h-full w-full object-cover" />
+          </motion.div>
         </motion.div>
-        <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/70" />
-        {/* Animated gradient overlay */}
-        <motion.div
-          className="absolute inset-0"
-          animate={{ background: [
-            "radial-gradient(ellipse at 20% 50%, hsl(263 83% 58% / 0.15), transparent 60%)",
-            "radial-gradient(ellipse at 80% 50%, hsl(217 91% 60% / 0.15), transparent 60%)",
-            "radial-gradient(ellipse at 20% 50%, hsl(263 83% 58% / 0.15), transparent 60%)",
-          ]}}
-          transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-        />
+        
+        {/* Layered gradients for depth */}
+        <div className="absolute inset-0 bg-gradient-to-b from-black/60 via-black/30 to-black/90" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_0%,rgba(0,0,0,0.6)_100%)]" />
+
+        {/* Floating magical orbs/particles */}
+        <div className="absolute inset-0 overflow-hidden pointer-events-none">
+          {[...Array(30)].map((_, i) => {
+            const size = Math.random() * 6 + 3;
+            return (
+              <motion.div
+                key={`orb-${i}`}
+                className="absolute rounded-full bg-white shadow-[0_0_15px_3px_rgba(255,255,255,0.4)] blur-[1px]"
+                style={{
+                  width: size,
+                  height: size,
+                  left: `${Math.random() * 100}%`,
+                  top: `${Math.random() * 100}%`,
+                }}
+                animate={{
+                  y: [0, -Math.random() * 150 - 50],
+                  x: [0, Math.random() * 60 - 30],
+                  opacity: [0, Math.random() * 0.6 + 0.2, 0],
+                  scale: [0.5, 1.5, 0.5]
+                }}
+                transition={{
+                  duration: Math.random() * 8 + 8,
+                  repeat: Infinity,
+                  delay: Math.random() * 5,
+                  ease: "easeInOut",
+                }}
+              />
+            );
+          })}
+        </div>
 
         <motion.div style={{ opacity: heroOpacity }} className="container-max relative z-10 px-4 pt-20 text-center">
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.7, delay: 0.2 }}>
-            <span className="mb-8 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-5 py-2.5 text-sm font-medium text-white/90 backdrop-blur-xl">
-              <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 8, repeat: Infinity, ease: "linear" }}>
-                <Sparkles className="h-4 w-4 text-secondary" />
-              </motion.div>
-              India's #1 Group Travel Platform
+          {/* Subtle badge */}
+          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, delay: 0.2 }}>
+            <span className="mb-6 inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-5 py-2 text-xs font-medium text-white/70 backdrop-blur-xl">
+              <Sparkles className="h-3.5 w-3.5 text-violet-400" />
+              AI-Powered Travel Planning
             </span>
           </motion.div>
 
+          {/* Main heading — clean serif + sans combo */}
           <motion.h1
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.3 }}
-            className="mb-7 text-5xl font-bold leading-[1.05] tracking-tight text-white md:text-7xl lg:text-[5.5rem]"
+            className="mb-4 text-5xl font-bold leading-[1.05] tracking-tight text-white md:text-7xl lg:text-[5.5rem]"
           >
-            Your Tribe.
+            Where will you go
             <br />
-            Your <span className="font-serif italic bg-gradient-to-r from-violet-300 via-purple-200 to-blue-300 bg-clip-text text-transparent pl-1">Adventure.</span>
+            <span className="font-serif italic bg-gradient-to-r from-violet-300 via-purple-200 to-blue-300 bg-clip-text text-transparent">next?</span>
           </motion.h1>
 
           <motion.p
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="mx-auto mb-12 max-w-xl text-base text-white/65 md:text-lg leading-relaxed"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.5 }}
+            className="mx-auto mb-10 max-w-md text-base text-white/50 leading-relaxed"
           >
-            Find like-minded travelers. Plan unforgettable trips with AI. 
-            Split costs, coordinate everything — all in one place.
+            Your personal AI travel assistant. Tell us where you dream of going — we'll craft the perfect plan.
           </motion.p>
 
+          {/* ─── Single-Question Hero Input ─── */}
           <motion.div
-            initial={{ opacity: 0, y: 30 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.5 }}
-            className="flex flex-col items-center justify-center gap-4 sm:flex-row"
+            transition={{ delay: 0.6, duration: 0.7 }}
+            className="mx-auto max-w-xl"
           >
-            <Link to="/ai-planner">
-              <Button variant="hero" size="xl" className="text-base group">
-                Try AI Planner
-                <motion.div className="ml-2" animate={{ x: [0, 4, 0] }} transition={{ duration: 1.5, repeat: Infinity }}>
-                  <Sparkles className="h-5 w-5" />
-                </motion.div>
-              </Button>
-            </Link>
-            <a href="https://chat.whatsapp.com/LTkzdemDEg8AJCrXlyu4G6?mode=gi_t" target="_blank" rel="noopener noreferrer">
-              <Button variant="hero-outline" size="xl" className="text-base gap-2">
-                <ArrowRight className="h-4 w-4" /> Join Waitlist
-              </Button>
-            </a>
+            <div className="relative">
+              <div className="flex items-center gap-2 rounded-2xl border border-white/15 bg-white/10 px-5 py-3 backdrop-blur-2xl shadow-2xl shadow-black/30 transition-all duration-300 focus-within:border-violet-400/50 focus-within:bg-white/15 focus-within:shadow-violet-500/10">
+                <Search className="h-5 w-5 text-white/40 flex-shrink-0" />
+                <input
+                  type="text"
+                  placeholder="Where do you dream of going?"
+                  value={heroInput}
+                  onChange={(e) => { setHeroInput(e.target.value); setShowSuggestions(true); }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onKeyDown={(e) => e.key === "Enter" && handleHeroSearch()}
+                  className="flex-1 bg-transparent text-base text-white placeholder:text-white/35 outline-none"
+                />
+                <motion.button
+                  whileHover={{ rotate: 180, scale: 1.1 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={handleSurpriseMe}
+                  className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-white/60 hover:bg-white/20 hover:text-white transition-all flex-shrink-0"
+                  title="Surprise me!"
+                >
+                  <Shuffle className="h-4 w-4" />
+                </motion.button>
+                <Button
+                  onClick={() => handleHeroSearch()}
+                  className="rounded-xl bg-gradient-to-r from-violet-600 to-purple-600 text-white border-0 shadow-lg shadow-violet-500/25 hover:shadow-violet-500/40 px-6 font-semibold flex-shrink-0"
+                >
+                  Plan Trip
+                </Button>
+              </div>
+
+              {/* Suggestion dropdown */}
+              <AnimatePresence>
+                {showSuggestions && heroInput.length > 0 && filteredSuggestions.length > 0 && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    className="absolute top-full left-0 right-0 mt-2 rounded-2xl border border-white/10 bg-black/80 backdrop-blur-2xl shadow-2xl overflow-hidden z-50"
+                  >
+                    {filteredSuggestions.map((s) => (
+                      <button
+                        key={s.name}
+                        onClick={() => { setHeroInput(s.name); setShowSuggestions(false); handleHeroSearch(s.name); }}
+                        className="flex w-full items-center gap-3 px-5 py-3 text-left text-white/80 hover:bg-white/10 transition-colors"
+                      >
+                        <span className="text-lg">{s.emoji}</span>
+                        <div>
+                          <p className="text-sm font-medium text-white">{s.name}</p>
+                          <p className="text-xs text-white/40">{s.tag}</p>
+                        </div>
+                      </button>
+                    ))}
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </div>
+
+            {/* Quick destination pills */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.9 }}
+              className="mt-5 flex flex-wrap items-center justify-center gap-2"
+            >
+              <span className="text-xs text-white/30 mr-1">Popular:</span>
+              {["Goa", "Jaipur", "Kerala", "Manali", "Bali"].map((d) => (
+                <button
+                  key={d}
+                  onClick={() => handleHeroSearch(d)}
+                  className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/50 hover:bg-white/15 hover:text-white/80 hover:border-white/20 transition-all duration-300"
+                >
+                  {d}
+                </button>
+              ))}
+            </motion.div>
           </motion.div>
 
-          {/* Stats */}
+          {/* Rotating micro-stories */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 1, delay: 0.9 }}
-            className="mt-20 flex flex-wrap items-center justify-center gap-10 sm:gap-16"
+            transition={{ delay: 1.2 }}
+            className="mt-14"
           >
-            {[
-              { value: "50K+", label: "Travelers" },
-              { value: "120+", label: "Destinations" },
-              { value: "4.9", label: "Avg Rating" },
-            ].map((stat) => (
-              <div key={stat.label} className="text-center">
-                <div className="text-2xl font-bold text-white md:text-3xl">{stat.value}</div>
-                <div className="text-xs font-medium uppercase tracking-widest text-white/40 mt-1">{stat.label}</div>
-              </div>
-            ))}
+            <MicroStory />
           </motion.div>
         </motion.div>
 
@@ -208,9 +361,9 @@ const Index = () => {
           <motion.div
             animate={{ y: [0, 8, 0] }}
             transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
-            className="flex h-10 w-6 items-start justify-center rounded-full border-2 border-white/20 p-1"
+            className="flex h-10 w-6 items-start justify-center rounded-full border-2 border-white/15 p-1"
           >
-            <div className="h-2 w-1 rounded-full bg-white/40" />
+            <div className="h-2 w-1 rounded-full bg-white/30" />
           </motion.div>
         </motion.div>
       </section>
@@ -230,8 +383,8 @@ const Index = () => {
                 Popular <span className="font-serif italic text-gradient">Destinations</span>
               </h2>
             </div>
-            <Link to="/explore" className="group flex items-center gap-2 text-sm font-semibold text-secondary hover:text-secondary/80 transition-colors">
-              View all destinations <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            <Link to="/ai-planner" className="group flex items-center gap-2 text-sm font-semibold text-secondary hover:text-secondary/80 transition-colors">
+              Plan your own trip <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </Link>
           </motion.div>
 
@@ -244,7 +397,7 @@ const Index = () => {
                 viewport={{ once: true }}
                 transition={{ delay: i * 0.1, duration: 0.6 }}
               >
-                <Link to="/explore">
+                <Link to={`/ai-planner?destination=${encodeURIComponent(dest.name)}`}>
                   <motion.div
                     whileHover={{ y: -8 }}
                     transition={{ type: "spring", stiffness: 300 }}
@@ -262,11 +415,12 @@ const Index = () => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent" />
                     <div className="absolute bottom-0 left-0 right-0 p-5">
+                      <span className="mb-2 inline-block rounded-full bg-white/15 px-2.5 py-0.5 text-[10px] font-medium text-white/80 backdrop-blur-sm">{dest.tag}</span>
                       <h3 className="text-xl font-bold text-white mb-1">{dest.name}</h3>
-                      <span className="text-xs font-medium text-white/60 uppercase tracking-wider">{dest.trips}</span>
+                      <span className="text-xs font-medium text-white/50 uppercase tracking-wider">{dest.trips}</span>
                     </div>
                     <motion.div
-                      className="absolute inset-0 bg-secondary/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                      className="absolute inset-0 bg-secondary/15 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
                     />
                   </motion.div>
                 </Link>
@@ -278,11 +432,10 @@ const Index = () => {
 
       {/* ─── Features ─── */}
       <section className="section-padding bg-muted/30 relative overflow-hidden">
-        {/* Subtle grid background */}
         <div className="absolute inset-0 pointer-events-none" style={{
           backgroundImage: `
-            linear-gradient(hsl(var(--border) / 0.4) 1px, transparent 1px),
-            linear-gradient(90deg, hsl(var(--border) / 0.4) 1px, transparent 1px)
+            linear-gradient(hsl(var(--border) / 0.3) 1px, transparent 1px),
+            linear-gradient(90deg, hsl(var(--border) / 0.3) 1px, transparent 1px)
           `,
           backgroundSize: "60px 60px",
         }} />
@@ -300,7 +453,7 @@ const Index = () => {
               Built for <span className="font-serif italic text-gradient">Real Travelers</span>
             </h2>
             <p className="mx-auto max-w-xl text-base text-muted-foreground leading-relaxed">
-              Every feature designed from real travel pain points. No fluff, just what actually matters when you're on the road.
+              Every feature designed from real travel pain points. No fluff, just what actually matters.
             </p>
           </motion.div>
 
@@ -311,25 +464,20 @@ const Index = () => {
             viewport={{ once: true }}
             className="grid gap-5 md:grid-cols-2 lg:grid-cols-4"
           >
-            {features.map((feature, i) => (
+            {features.map((feature) => (
               <motion.div
                 key={feature.title}
                 variants={fadeInUp}
                 whileHover={{ y: -6 }}
                 className="group relative overflow-hidden rounded-3xl border border-border bg-card/90 backdrop-blur-sm p-7 transition-all duration-500 hover:shadow-2xl hover:shadow-secondary/10 hover:border-secondary/20"
               >
-                <motion.div
-                  whileHover={{ rotate: -5, scale: 1.05 }}
+                <div
                   className={`mb-6 inline-flex h-12 w-12 items-center justify-center rounded-xl border ${feature.border} ${feature.bg}`}
                 >
                   <feature.icon className={`h-5 w-5 ${feature.color}`} strokeWidth={1.8} />
-                </motion.div>
+                </div>
                 <h3 className="mb-3 text-lg font-bold text-foreground">{feature.title}</h3>
                 <p className="text-sm leading-relaxed text-muted-foreground">{feature.description}</p>
-
-                <div className="mt-5 flex items-center gap-1.5 text-sm font-semibold text-secondary opacity-0 translate-y-2 transition-all duration-300 group-hover:opacity-100 group-hover:translate-y-0">
-                  Learn more <ChevronRight className="h-3.5 w-3.5" />
-                </div>
               </motion.div>
             ))}
           </motion.div>
@@ -352,7 +500,6 @@ const Index = () => {
           </motion.div>
 
           <div className="relative grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            {/* Connecting line (desktop) */}
             <div className="absolute top-20 left-[12.5%] right-[12.5%] h-px bg-gradient-to-r from-transparent via-border to-transparent hidden lg:block" />
 
             {steps.map((step, i) => (
@@ -364,12 +511,11 @@ const Index = () => {
                 transition={{ delay: i * 0.12, duration: 0.6 }}
                 className="relative text-center"
               >
-                <motion.div
-                  whileHover={{ scale: 1.08, rotate: 3 }}
+                <div
                   className={`relative z-10 mx-auto mb-6 flex h-14 w-14 items-center justify-center rounded-xl border ${step.border} ${step.bg}`}
                 >
                   <step.icon className={`h-6 w-6 ${step.color}`} strokeWidth={1.8} />
-                </motion.div>
+                </div>
                 <div className="mb-2 text-5xl font-black text-border font-serif select-none">{step.number}</div>
                 <h3 className="mb-2 text-lg font-bold text-foreground">{step.title}</h3>
                 <p className="text-sm leading-relaxed text-muted-foreground">{step.description}</p>
@@ -405,7 +551,6 @@ const Index = () => {
                 whileHover={{ y: -4 }}
                 className="group relative overflow-hidden rounded-3xl border border-border bg-card p-8 transition-all duration-500 hover:shadow-2xl hover:shadow-secondary/8 hover:border-secondary/15"
               >
-                {/* Subtle top accent */}
                 <div className={`absolute top-0 left-0 right-0 h-px bg-gradient-to-r ${t.gradient} opacity-0 group-hover:opacity-100 transition-opacity duration-500`} />
 
                 <div className="mb-5 flex gap-1">
@@ -415,8 +560,7 @@ const Index = () => {
                 </div>
                 <p className="mb-8 text-base leading-relaxed text-foreground/80">"{t.quote}"</p>
                 <div className="flex items-center gap-3">
-                  <motion.div
-                    whileHover={{ scale: 1.1 }}
+                  <div
                     className={`flex h-11 w-11 items-center justify-center rounded-full border-2 ${
                       t.color === "text-violet-600" ? "border-violet-200 bg-violet-50 text-violet-600" :
                       t.color === "text-blue-600" ? "border-blue-200 bg-blue-50 text-blue-600" :
@@ -424,7 +568,7 @@ const Index = () => {
                     } text-xs font-bold`}
                   >
                     {t.avatar}
-                  </motion.div>
+                  </div>
                   <div>
                     <p className="font-semibold text-foreground">{t.author}</p>
                     <p className="text-xs text-muted-foreground">{t.role} · {t.location}</p>
@@ -448,7 +592,6 @@ const Index = () => {
           ]}}
           transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
         />
-        <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: "url(\"data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E\")" }} />
 
         <div className="container-max relative z-10 text-center">
           <motion.div
@@ -457,27 +600,17 @@ const Index = () => {
             viewport={{ once: true }}
             transition={{ duration: 0.7 }}
           >
-            <motion.div
-              initial={{ scale: 0 }}
-              whileInView={{ scale: 1 }}
-              viewport={{ once: true }}
-              transition={{ type: "spring", stiffness: 200, delay: 0.2 }}
-              className="mx-auto mb-8 flex h-16 w-16 items-center justify-center rounded-2xl bg-white/10 backdrop-blur-sm border border-white/10"
-            >
-              <Globe className="h-7 w-7 text-white" />
-            </motion.div>
-
             <h2 className="mb-5 text-3xl font-bold text-white md:text-5xl lg:text-6xl">
-              Ready to Find Your <span className="font-serif italic text-white/90">Tribe?</span>
+              Ready to Plan Your <span className="font-serif italic text-white/90">Dream Trip?</span>
             </h2>
             <p className="mx-auto mb-10 max-w-lg text-base text-white/50 leading-relaxed">
-              Join thousands of travelers across India who plan smarter, travel better, and make friends for life.
+              Join thousands of travelers across India who plan smarter and travel better.
             </p>
             <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link to="/ai-planner">
                 <motion.div whileHover={{ scale: 1.03, y: -2 }} whileTap={{ scale: 0.98 }}>
                   <Button size="xl" className="bg-white text-primary hover:bg-white/90 text-base shadow-2xl shadow-black/20 font-semibold">
-                    Try AI Planner <Sparkles className="ml-2 h-5 w-5" />
+                    Start Planning <Sparkles className="ml-2 h-5 w-5" />
                   </Button>
                 </motion.div>
               </Link>

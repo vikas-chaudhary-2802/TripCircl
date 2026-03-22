@@ -71,8 +71,22 @@ export function buildSystemPrompt(params: {
   dailyBudgetPerPerson: number;
   currencySymbol: string;
   styleInstructions: string;
+  tripPace?: string;
+  placeType?: string;
 }): string {
-  const { destination, isIndia, days, numTravelers, totalBudget, perPersonBudget, dailyBudgetPerPerson, currencySymbol, styleInstructions } = params;
+  const { destination, isIndia, days, numTravelers, totalBudget, perPersonBudget, dailyBudgetPerPerson, currencySymbol, styleInstructions, tripPace, placeType } = params;
+
+  const paceInstructions = tripPace === "Relaxed" 
+    ? "Max 2-3 places per day. Late starts, early finishes, plenty of rest time. DO NOT OVERPACK" 
+    : tripPace === "Fast-paced" 
+    ? "4-6 places per day. Action-packed from morning to night. Maximize sightseeing" 
+    : "3-4 places per day. Balanced itinerary with breathing room";
+
+  const placeInstructions = placeType === "Hidden gems"
+    ? "EXCLUSIVELY HIDDEN GEMS. Avoid mainstream tourist traps. Focus on secret alleys, offbeat paths, local secrets, and untouched spots"
+    : placeType === "Must-visit attractions"
+    ? "MUST-VISIT & ICONIC. Focus on top landmarks, famous attractions, and the 'greatest hits' of the destination"
+    : "MIX OF FAMOUS & HIDDEN. A perfect balance of must-visit icons and secret local spots";
 
   return `You are the world's most elite travel concierge with 40+ years of experience planning bespoke trips${isIndia ? " across India" : " worldwide"}. You have personally visited every destination you recommend. You think like a GPS navigation system AND a seasoned local guide.
 
@@ -117,7 +131,7 @@ PLANNING INTELLIGENCE — THINK LIKE A LOCAL EXPERT:
    - Note if any attraction is commonly CLOSED on certain days (e.g., "Closed on Mondays")
 
 5. PACING & FATIGUE MANAGEMENT:
-   - Do NOT overpack days — max 4-5 major activities per day
+   - ${paceInstructions}
    - Include buffer time: 30-45 min between activities for rest, photos, spontaneous exploration
    - After every 2-3 activities, suggest a rest stop (café, park bench, chai break)
    - If travelers include elderly/kids, reduce pace by 30% and add more rest stops
@@ -148,7 +162,7 @@ PLANNING INTELLIGENCE — THINK LIKE A LOCAL EXPERT:
    - Scam awareness for tourist-heavy areas
 
 10. HIDDEN GEMS & LOCAL EXPERIENCES:
-    - At least 1-2 hidden gems per day that most tourists miss
+    - ${placeInstructions}
     - Include a "local's secret" that adds authentic flavor
     - Suggest interactions: chat with shopkeepers, attend a local event, visit a neighborhood market
 
@@ -247,11 +261,15 @@ export function buildUserPrompt(params: {
   prompt: string;
   startDate: string;
   endDate: string;
+  tripPace?: string;
+  placeType?: string;
 }): string {
-  const { days, destination, country, numTravelers, travelStyle, totalBudget, perPersonBudget, dailyBudgetPerPerson, currencySymbol, interests, prompt, startDate, endDate } = params;
+  const { days, destination, country, numTravelers, travelStyle, totalBudget, perPersonBudget, dailyBudgetPerPerson, currencySymbol, interests, prompt, startDate, endDate, tripPace, placeType } = params;
 
   let userPrompt = `Create an extraordinary ${days}-day itinerary for ${destination}${country ? `, ${country}` : ""} for ${numTravelers} travelers.`;
   if (travelStyle) userPrompt += ` Travel style: ${travelStyle} — match EVERY recommendation to this style.`;
+  if (tripPace) userPrompt += ` Pace: ${tripPace}.`;
+  if (placeType) userPrompt += ` Focus on: ${placeType}.`;
   if (totalBudget > 0) userPrompt += ` TOTAL budget: ${currencySymbol}${totalBudget} for all ${numTravelers} travelers combined (${currencySymbol}${perPersonBudget} per person, ~${currencySymbol}${dailyBudgetPerPerson}/person/day). UTILIZE 90%+ of this budget.`;
   if (interests) userPrompt += ` Special interests: ${interests}.`;
   if (prompt) userPrompt += ` Additional: ${prompt}`;

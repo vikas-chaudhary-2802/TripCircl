@@ -39,7 +39,7 @@ const Explore = () => {
   };
 
   const filteredTrips = useMemo(() => {
-    let filtered = trips.filter((trip) => {
+    const filtered = trips.filter((trip) => {
       const matchSearch =
         !search ||
         trip.destination.toLowerCase().includes(search.toLowerCase()) ||

@@ -22,6 +22,7 @@ const Messages = () => {
   useEffect(() => {
     if (!user) { navigate("/login"); return; }
     loadConversations();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   useEffect(() => {

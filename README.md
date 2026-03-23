@@ -117,18 +117,17 @@ We are shifting from Supabase to a custom Node.js/MongoDB backend with RBAC (Rol
    cp backend/.env.example backend/.env
    ```
 
-2. **Backend Setup**:
+2. **Quick Start (Root Commands)**:
+   You can now run commands directly from the root:
    ```bash
-   cd backend
-   npm install
-   npm start
+   npm install          # Install all dependencies
+   npm run build        # Build the frontend
+   npm run dev:frontend # Start frontend dev server
+   npm run start:backend # Start backend server
    ```
 
-3. **Frontend Setup**:
-   ```bash
-   cd frontend
-   npm install
-   npm run dev
-   ```
+3. **Manual Setup**:
+   - **Backend**: `cd backend && npm start`
+   - **Frontend**: `cd frontend && npm run dev`
 
 Start your journey with trip.cicl and experience travel planning, reimagined.

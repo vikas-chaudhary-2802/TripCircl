@@ -86,4 +86,49 @@ it’s your **travel thinking partner**.
 
 ## 🌐 Get Started
 
+### Project Structure
+
+This repository is divided into two main parts:
+- **`frontend/`**: The React/Vite application.
+- **`backend/`**: Node.js/Express server (migrating from Supabase to MongoDB).
+
+### 🛠 Collaborator Migration Guide (MongoDB & Auth)
+
+We are shifting from Supabase to a custom Node.js/MongoDB backend with RBAC (Role-Based Access Control). Here is how you should proceed:
+
+#### 1. Backend Development (`/backend`)
+- **Database**: Use `src/config/db.js` to configure your MongoDB connection.
+- **Models**: Define your Mongoose schemas in `src/models/`. A `User` model with roles (`user`, `admin`, `moderator`) is already scaffolded.
+- **Auth & RBAC**: Implementation logic for login/signup should go in `src/controllers/authController.js`. Use the `protect` and `authorize` middlewares in `src/middlewares/authMiddleware.js` to secure your routes.
+- **Routes**: Define your API endpoints in `src/routes/`.
+
+#### 2. Frontend Development (`/frontend`)
+- **API Calls**: Do NOT use Supabase client directly for new features. Use the abstracted `src/services/api.ts` which uses Axios and automatically attaches JWT tokens.
+- **Global Auth State**: Use the `AuthProvider` in `src/context/AuthContext.tsx` to access user info and roles throughout the app.
+
+---
+
+### Setup Instructions
+
+1. **Environment Variables**:
+   Navigate to both `frontend/` and `backend/` directories and copy the `.env.example` files to `.env`.
+   ```bash
+   cp frontend/.env.example frontend/.env
+   cp backend/.env.example backend/.env
+   ```
+
+2. **Backend Setup**:
+   ```bash
+   cd backend
+   npm install
+   npm start
+   ```
+
+3. **Frontend Setup**:
+   ```bash
+   cd frontend
+   npm install
+   npm run dev
+   ```
+
 Start your journey with trip.cicl and experience travel planning, reimagined.

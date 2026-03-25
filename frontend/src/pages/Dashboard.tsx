@@ -7,60 +7,45 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import TripCard from "@/components/TripCard";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import tripService, { Trip } from "@/services/tripService";
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { user, profile } = useAuth();
-  const [myTrips, setMyTrips] = useState<any[]>([]);
-  const [suggestedTrips, setSuggestedTrips] = useState<any[]>([]);
+  const { user } = useAuth();
+  const [myTrips, setMyTrips] = useState<Trip[]>([]);
+  const [suggestedTrips, setSuggestedTrips] = useState<Trip[]>([]);
   const [pendingInvites, setPendingInvites] = useState(0);
-  const [messageCount, setMessageCount] = useState(0);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     if (!user) { navigate("/login"); return; }
     loadData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user]);
+  }, [user, navigate]);
 
   const loadData = async () => {
     if (!user) return;
+    setLoading(true);
+    try {
+      const myData = await tripService.getMyTrips();
+      setMyTrips(myData);
 
-    // My trips
-    const { data: memberships } = await supabase
-      .from("trip_members")
-      .select("trip_id, trips(*, profiles!trips_organizer_id_fkey(name, avatar_url, rating))")
-      .eq("user_id", user.id)
-      .eq("status", "approved");
-    if (memberships) setMyTrips(memberships.map((m: any) => m.trips).filter(Boolean));
+      const allTrips = await tripService.getAllTrips();
+      // Filter out trips I'm already part of
+      const myTripIds = myData.map(t => t._id);
+      setSuggestedTrips(allTrips.filter(t => !myTripIds.includes(t._id)));
 
-    // Suggested trips (ones I'm not part of)
-    const { data: allTrips } = await supabase
-      .from("trips")
-      .select("*, profiles!trips_organizer_id_fkey(name, avatar_url, rating)")
-      .eq("status", "active")
-      .neq("organizer_id", user.id)
-      .limit(6);
-    if (allTrips) {
-      const myTripIds = memberships?.map((m: any) => m.trip_id) || [];
-      setSuggestedTrips(allTrips.filter((t) => !myTripIds.includes(t.id)));
+      // For now, setting pendingInvites to 0 as we haven't implemented that API yet
+      setPendingInvites(0);
+    } catch (error) {
+      console.error("Failed to load dashboard data:", error);
+    } finally {
+      setLoading(false);
     }
-
-    // Pending invites (trips where I'm pending)
-    const { count: pending } = await supabase
-      .from("trip_members")
-      .select("*", { count: "exact", head: true })
-      .eq("user_id", user.id)
-      .eq("status", "pending");
-    setPendingInvites(pending || 0);
-
-    setLoading(false);
   };
 
   if (!user) return null;
 
-  const firstName = profile?.name?.split(" ")[0] || "Traveler";
+  const firstName = user?.name?.split(" ")[0] || "Traveler";
 
   return (
     <div className="min-h-screen bg-background">
@@ -80,7 +65,7 @@ const Dashboard = () => {
             { label: "Your Trips", value: String(myTrips.length), icon: Calendar, color: "bg-secondary/10 text-secondary" },
             { label: "Messages", value: "—", icon: MessageCircle, color: "bg-accent/10 text-accent" },
             { label: "Pending", value: String(pendingInvites), icon: Bell, color: "bg-destructive/10 text-destructive" },
-            { label: "Trips Joined", value: String(profile?.trips_joined || myTrips.length), icon: MapPin, color: "bg-primary/10 text-primary" },
+            { label: "Trips Joined", value: String(myTrips.length), icon: MapPin, color: "bg-primary/10 text-primary" },
           ].map((stat) => (
             <div key={stat.label} className="rounded-2xl border border-border bg-card p-5">
               <div className={`mb-3 flex h-10 w-10 items-center justify-center rounded-xl ${stat.color}`}>
@@ -115,7 +100,7 @@ const Dashboard = () => {
           ) : myTrips.length > 0 ? (
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {myTrips.map((trip, i) => (
-                <TripCard key={trip.id} trip={trip} index={i} />
+                <TripCard key={trip._id} trip={trip} index={i} />
               ))}
             </div>
           ) : (
@@ -136,7 +121,7 @@ const Dashboard = () => {
             </div>
             <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
               {suggestedTrips.slice(0, 3).map((trip, i) => (
-                <TripCard key={trip.id} trip={trip} index={i} />
+                <TripCard key={trip._id} trip={trip} index={i} />
               ))}
             </div>
           </motion.div>

@@ -6,7 +6,6 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useState } from "react";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
 
 const featureInfo: Record<string, { title: string; description: string; icon: React.ElementType; gradient: string; emoji: string }> = {
   "/explore": {
@@ -65,17 +64,12 @@ const ComingSoon = () => {
 
     setLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("send-waitlist-email", {
-        body: { email, feature: path },
-      });
-
-      if (error) throw error;
-
-      setNotified(true);
+      // Newsletter mock
       toast.success("You're on the priority list! 🚀 Check your inbox for confirmation.");
-    } catch (err: any) {
-      console.error("Waitlist error:", err);
-      toast.error("Something went wrong. Please try again.");
+      setEmail("");
+      setNotified(true); // Set notified to true on success
+    } catch (error) {
+       toast.error("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }

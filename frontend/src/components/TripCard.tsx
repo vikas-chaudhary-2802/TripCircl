@@ -9,23 +9,23 @@ interface TripCardProps {
 }
 
 const TripCard = ({ trip, index = 0 }: TripCardProps) => {
-  const spotsLeft = (trip.max_group_size || trip.maxGroupSize || 8) - (trip.current_members || trip.currentMembers || 1);
-  const image = trip.image_url || trip.image || "https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=800&q=80";
+  const image = trip.images?.[0] || trip.image_url || trip.image || "https://images.unsplash.com/photo-1506929562872-bb421503ef21?w=800&q=80";
   const destination = trip.destination;
-  const country = trip.country;
   const title = trip.title;
-  const startDate = trip.start_date || trip.startDate;
-  const endDate = trip.end_date || trip.endDate;
-  const budgetMin = trip.budget_min || trip.budgetRange?.[0] || 0;
-  const budgetMax = trip.budget_max || trip.budgetRange?.[1] || 0;
-  const maxGroupSize = trip.max_group_size || trip.maxGroupSize || 8;
-  const currentMembers = trip.current_members || trip.currentMembers || 1;
-  const travelStyle = trip.travel_style || trip.travelStyle || "";
-  const tags = trip.tags || [];
-  const organizer = trip.profiles || trip.organizer;
-  const organizerName = organizer?.name || organizer?.avatar || "Organizer";
+  const startDate = trip.startDate || trip.start_date;
+  const endDate = trip.endDate || trip.end_date;
+  const budget = trip.budget || trip.budget_min || trip.budgetRange?.[0] || 0;
+  const maxMembers = trip.maxMembers || trip.max_group_size || trip.maxGroupSize || 8;
+  const currentMembersCount = trip.currentMembersCount || trip.current_members || trip.currentMembers || 1;
+  const spotsLeft = maxMembers - currentMembersCount;
+  
+  const organizer = trip.organizer || trip.profiles;
+  const organizerName = organizer?.name || "Organizer";
+  const organizerAvatar = organizer?.avatar || organizer?.avatar_url;
   const organizerRating = organizer?.rating || 0;
   const organizerInitials = organizerName.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2);
+
+  const tripId = trip._id || trip.id;
 
   return (
     <motion.div
@@ -48,9 +48,9 @@ const TripCard = ({ trip, index = 0 }: TripCardProps) => {
               }}
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-            {travelStyle && (
+            {trip.category && (
               <div className="absolute left-4 top-4">
-                <Badge className="border-0 bg-white/20 text-white backdrop-blur-md">{travelStyle}</Badge>
+                <Badge className="border-0 bg-white/20 text-white backdrop-blur-md">{trip.category}</Badge>
               </div>
             )}
             {spotsLeft <= 3 && spotsLeft > 0 && (
@@ -60,10 +60,7 @@ const TripCard = ({ trip, index = 0 }: TripCardProps) => {
             )}
             <div className="absolute bottom-4 left-4 right-4">
               <h3 className="mb-1 text-lg font-bold text-white drop-shadow-md">{title}</h3>
-              <div className="flex items-center gap-1 text-white/80">
-                <MapPin className="h-3.5 w-3.5" />
-                <span className="text-sm">{destination}, {country}</span>
-              </div>
+                <span className="text-sm">{destination}</span>
             </div>
           </div>
 
@@ -77,12 +74,10 @@ const TripCard = ({ trip, index = 0 }: TripCardProps) => {
                 </span>
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
-                <DollarSign className="h-4 w-4" />
-                <span className="text-xs">${budgetMin} - ${budgetMax}</span>
+                <span className="text-xs">${budget}</span>
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
-                <Users className="h-4 w-4" />
-                <span className="text-xs">{currentMembers}/{maxGroupSize} members</span>
+                <span className="text-xs">{currentMembersCount}/{maxMembers} members</span>
               </div>
               <div className="flex items-center gap-2 text-muted-foreground">
                 <Star className="h-4 w-4 fill-secondary text-secondary" />
@@ -90,17 +85,17 @@ const TripCard = ({ trip, index = 0 }: TripCardProps) => {
               </div>
             </div>
 
-            {tags.length > 0 && (
+            {trip.tags && trip.tags.length > 0 && (
               <div className="mb-4 flex flex-wrap gap-1.5">
-                {tags.slice(0, 3).map((tag: string) => (
+                {trip.tags.slice(0, 3).map((tag: string) => (
                   <span key={tag} className="rounded-full bg-muted px-2.5 py-0.5 text-xs text-muted-foreground">{tag}</span>
                 ))}
               </div>
             )}
 
             <div className="flex items-center gap-2 border-t border-border pt-4">
-              {organizer?.avatar_url ? (
-                <img src={organizer.avatar_url} alt={organizerName} className="h-8 w-8 rounded-full object-cover" />
+              {organizerAvatar ? (
+                <img src={organizerAvatar} alt={organizerName} className="h-8 w-8 rounded-full object-cover" />
               ) : (
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-accent text-xs font-bold text-white">
                   {organizerInitials}

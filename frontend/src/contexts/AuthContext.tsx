@@ -1,85 +1,87 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { Session, User } from "@supabase/supabase-js";
-import { supabase } from "@/integrations/supabase/client";
-import type { Tables } from "@/integrations/supabase/types";
-
-type Profile = Tables<"profiles">;
+import { createContext, useContext, useEffect, useState, ReactNode, useCallback } from "react";
+import authService, { AuthUser } from "@/services/authService";
+import { getAccessToken, clearTokens } from "@/services/api";
 
 interface AuthContextType {
-  session: Session | null;
-  user: User | null;
-  profile: Profile | null;
+  user: AuthUser | null;
   loading: boolean;
-  signOut: () => Promise<void>;
-  refreshProfile: () => Promise<void>;
+  login: (email: string, password: string) => Promise<void>;
+  register: (name: string, email: string, password: string) => Promise<void>;
+  logout: () => Promise<void>;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
-  session: null,
   user: null,
-  profile: null,
   loading: true,
-  signOut: async () => {},
-  refreshProfile: async () => {},
+  login: async () => {},
+  register: async () => {},
+  logout: async () => {},
+  refreshUser: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
-  const [session, setSession] = useState<Session | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = async (userId: string) => {
-    const { data } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("user_id", userId)
-      .single();
-    setProfile(data);
-  };
-
-  const refreshProfile = async () => {
-    if (user) await fetchProfile(user.id);
-  };
-
-  useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
-        setSession(session);
-        setUser(session?.user ?? null);
-        if (session?.user) {
-          // Use setTimeout to avoid Supabase deadlock
-          setTimeout(() => fetchProfile(session.user.id), 0);
-        } else {
-          setProfile(null);
-        }
-        setLoading(false);
-      }
-    );
-
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        fetchProfile(session.user.id);
-      }
+  const refreshUser = useCallback(async () => {
+    const token = getAccessToken();
+    if (!token) {
+      setUser(null);
       setLoading(false);
-    });
+      return;
+    }
 
-    return () => subscription.unsubscribe();
+    try {
+      const userData = await authService.getMe();
+      setUser(userData);
+    } catch (error) {
+      console.error("Auth initialization failed:", error);
+      setUser(null);
+      clearTokens();
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-    setSession(null);
-    setUser(null);
-    setProfile(null);
+  useEffect(() => {
+    refreshUser();
+
+    // Listen for session-expired events from the API interceptor
+    const handleSessionExpired = () => {
+      setUser(null);
+      clearTokens();
+    };
+
+    window.addEventListener("auth:session-expired", handleSessionExpired);
+    return () => window.removeEventListener("auth:session-expired", handleSessionExpired);
+  }, [refreshUser]);
+
+  const login = async (email: string, password: string) => {
+    const result = await authService.login(email, password);
+    setUser(result.user);
+  };
+
+  const register = async (name: string, email: string, password: string) => {
+    await authService.register(name, email, password);
+    // After registration, usually we login automatically or redirect to login.
+    // authService.register returns the user object, but we need tokens to be logged in.
+    // For simplicity, we'll let the Login page handle the redirection or auto-login.
+  };
+
+  const logout = async () => {
+    try {
+      await authService.logout();
+    } finally {
+      setUser(null);
+      clearTokens();
+    }
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, profile, loading, signOut, refreshProfile }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );

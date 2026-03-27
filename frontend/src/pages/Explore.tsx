@@ -8,14 +8,14 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import TripCard from "@/components/TripCard";
 import { TRAVEL_STYLES } from "@/lib/mock-data";
-import { supabase } from "@/integrations/supabase/client";
+import tripService, { Trip } from "@/services/tripService";
 
 const Explore = () => {
   const [search, setSearch] = useState("");
   const [selectedStyles, setSelectedStyles] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [sortBy, setSortBy] = useState<"date" | "budget" | "spots">("date");
-  const [trips, setTrips] = useState<any[]>([]);
+  const [trips, setTrips] = useState<Trip[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -23,13 +23,15 @@ const Explore = () => {
   }, []);
 
   const loadTrips = async () => {
-    const { data } = await supabase
-      .from("trips")
-      .select("*, profiles!trips_organizer_id_fkey(name, avatar_url, rating)")
-      .eq("status", "active")
-      .order("created_at", { ascending: false });
-    if (data) setTrips(data);
-    setLoading(false);
+    setLoading(true);
+    try {
+      const data = await tripService.getAllTrips();
+      setTrips(data);
+    } catch (error) {
+      console.error("Failed to load trips:", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const toggleStyle = (style: string) => {
@@ -43,16 +45,16 @@ const Explore = () => {
       const matchSearch =
         !search ||
         trip.destination.toLowerCase().includes(search.toLowerCase()) ||
-        trip.title.toLowerCase().includes(search.toLowerCase()) ||
-        trip.country.toLowerCase().includes(search.toLowerCase());
+        trip.title.toLowerCase().includes(search.toLowerCase());
+      
       const matchStyle =
-        selectedStyles.length === 0 || selectedStyles.includes(trip.travel_style);
+        selectedStyles.length === 0 || selectedStyles.includes(trip.category);
       return matchSearch && matchStyle;
     });
 
-    if (sortBy === "date") filtered.sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
-    if (sortBy === "budget") filtered.sort((a, b) => (a.budget_min || 0) - (b.budget_min || 0));
-    if (sortBy === "spots") filtered.sort((a, b) => ((a.max_group_size || 8) - (a.current_members || 1)) - ((b.max_group_size || 8) - (b.current_members || 1)));
+    if (sortBy === "date") filtered.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime());
+    if (sortBy === "budget") filtered.sort((a, b) => (a.budget || 0) - (b.budget || 0));
+    if (sortBy === "spots") filtered.sort((a, b) => (a.maxMembers - a.currentMembersCount) - (b.maxMembers - b.currentMembersCount));
 
     return filtered;
   }, [search, selectedStyles, sortBy, trips]);
@@ -133,7 +135,7 @@ const Explore = () => {
         ) : filteredTrips.length > 0 ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {filteredTrips.map((trip, index) => (
-              <TripCard key={trip.id} trip={trip} index={index} />
+              <TripCard key={trip._id} trip={trip} index={index} />
             ))}
           </div>
         ) : (

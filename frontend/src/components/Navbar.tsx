@@ -15,7 +15,7 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const location = useLocation();
   const isHome = location.pathname === "/";
-  const { user, profile, signOut } = useAuth();
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20);
@@ -24,8 +24,8 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
-  const initials = profile?.name
-    ? profile.name.split(" ").map((n) => n[0]).join("").toUpperCase().slice(0, 2)
+  const initials = user?.name
+    ? user.name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2)
     : "?";
 
   const useSolid = scrolled || !isHome;
@@ -132,7 +132,7 @@ const Navbar = () => {
                 <motion.button
                   whileHover={{ y: -1 }}
                   whileTap={{ scale: 0.95 }}
-                  onClick={signOut}
+                  onClick={logout}
                   className={`flex h-9 w-9 items-center justify-center rounded-xl transition-all duration-200 ${
                     useSolid ? "hover:bg-destructive/8 text-muted-foreground/60 hover:text-destructive" : "hover:bg-white/8 text-white/40 hover:text-white/80"
                   }`}
@@ -222,7 +222,7 @@ const Navbar = () => {
                       <div className="flex h-6 w-6 items-center justify-center rounded-full bg-gradient-to-br from-secondary to-accent text-[10px] font-bold text-white">{initials}</div>
                       Profile
                     </Link>
-                    <button onClick={() => { signOut(); setMobileOpen(false); }} className="flex items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium text-destructive hover:bg-destructive/5">
+                    <button onClick={() => { logout(); setMobileOpen(false); }} className="flex items-center gap-3 rounded-xl px-4 py-3 text-left text-sm font-medium text-destructive hover:bg-destructive/5">
                       <LogOut className="h-4 w-4" /> Sign Out
                     </button>
                   </>

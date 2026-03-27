@@ -1,19 +1,47 @@
-const express = require('express');
-const dotenv = require('dotenv');
+'use strict';
+
+const { PORT } = require('./config/env');
 const connectDB = require('./config/db');
+const logger = require('./config/logger');
+const createApp = require('./app');
 
-dotenv.config();
-connectDB();
+const start = async () => {
+  // Connect to MongoDB before starting server
+  await connectDB();
 
-const app = express();
-app.use(express.json());
+  const app = createApp();
 
-app.get('/', (req, res) => {
-  res.send('API is running...');
-});
+  const server = app.listen(PORT, () => {
+    logger.info(`Server running in ${process.env.NODE_ENV || 'development'} mode on port ${PORT}`);
+  });
 
-// Import and use routes here
-// app.use('/api/auth', require('./routes/authRoutes'));
+  /* ─── Graceful Shutdown ─── */
+  const shutdown = (signal) => {
+    logger.warn(`${signal} received. Shutting down gracefully...`);
+    server.close(() => {
+      logger.info('HTTP server closed');
+      process.exit(0);
+    });
+    // Force shutdown after 10s
+    setTimeout(() => {
+      logger.error('Forced shutdown after timeout');
+      process.exit(1);
+    }, 10000);
+  };
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
+
+  /* ─── Unhandled Rejections / Exceptions ─── */
+  process.on('unhandledRejection', (err) => {
+    logger.error(`Unhandled Rejection: ${err.message}`);
+    server.close(() => process.exit(1));
+  });
+
+  process.on('uncaughtException', (err) => {
+    logger.error(`Uncaught Exception: ${err.message}`);
+    process.exit(1);
+  });
+};
+
+start();

@@ -7,10 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import tripService from "@/services/tripService";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
-import { TRAVEL_STYLES, TRIP_IMAGES } from "@/lib/mock-data";
+import { TRAVEL_STYLES } from "@/lib/mock-data";
 
 const steps = [
   { label: "Destination", icon: MapPin },
@@ -33,7 +33,7 @@ const CreateTrip = () => {
     budgetMin: "",
     budgetMax: "",
     maxGroupSize: "8",
-    travelStyle: "",
+    travelStyle: "Adventure",
     title: "",
     description: "",
   });
@@ -42,10 +42,10 @@ const CreateTrip = () => {
 
   const canNext = () => {
     switch (step) {
-      case 0: return form.destination && form.country;
-      case 1: return form.startDate && form.endDate;
-      case 2: return form.budgetMin && form.budgetMax && form.maxGroupSize && form.travelStyle;
-      case 3: return form.title && form.description;
+      case 0: return !!form.destination;
+      case 1: return !!form.startDate && !!form.endDate;
+      case 2: return !!form.budgetMax && !!form.maxGroupSize && !!form.travelStyle;
+      case 3: return !!form.title && !!form.description;
       default: return false;
     }
   };
@@ -58,57 +58,32 @@ const CreateTrip = () => {
     }
 
     setLoading(true);
-    const randomImage = TRIP_IMAGES[Math.floor(Math.random() * TRIP_IMAGES.length)];
-
-    const { data: trip, error } = await supabase.from("trips").insert({
-      organizer_id: user.id,
-      title: form.title,
-      destination: form.destination,
-      country: form.country,
-      image_url: randomImage,
-      start_date: form.startDate,
-      end_date: form.endDate,
-      budget_min: parseInt(form.budgetMin),
-      budget_max: parseInt(form.budgetMax),
-      max_group_size: parseInt(form.maxGroupSize),
-      travel_style: form.travelStyle as any,
-      description: form.description,
-    }).select().single();
-
-    if (error) {
-      toast({ title: "Error", description: error.message, variant: "destructive" });
-      setLoading(false);
-      return;
-    }
-
-    // Add organizer as first member
-    await supabase.from("trip_members").insert({
-      trip_id: trip.id,
-      user_id: user.id,
-      role: "organizer",
-      status: "approved",
-    });
-
-    // Create group conversation for the trip
-    const { data: conv } = await supabase.from("conversations").insert({
-      trip_id: trip.id,
-      type: "group",
-      name: form.title,
-    }).select().single();
-
-    if (conv) {
-      await supabase.from("conversation_participants").insert({
-        conversation_id: conv.id,
-        user_id: user.id,
+    try {
+      const trip = await tripService.createTrip({
+        title: form.title,
+        description: form.description,
+        destination: form.destination,
+        startDate: form.startDate,
+        endDate: form.endDate,
+        budget: parseInt(form.budgetMax),
+        maxMembers: parseInt(form.maxGroupSize),
+        category: form.travelStyle,
       });
-    }
 
-    setLoading(false);
-    toast({
-      title: "Trip Created! 🎉",
-      description: `"${form.title}" has been published. Other travelers can now find and join your trip.`,
-    });
-    navigate(`/trip/${trip.id}`);
+      toast({
+        title: "Trip Created! 🎉",
+        description: `"${form.title}" has been published successfully.`,
+      });
+      navigate(`/trip/${trip._id}`);
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: error.response?.data?.message || error.message || "Failed to create trip",
+        variant: "destructive",
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

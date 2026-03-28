@@ -6,6 +6,8 @@ const router = express.Router();
 // Mount feature routers here
 router.use('/auth', require('./authRoutes'));
 router.use('/trips', require('./tripRoutes'));
+router.use('/itinerary', require('./itineraryRoutes'));
+router.use('/waitlist', require('./waitlistRoutes'));
 
 // Health check
 router.get('/health', (req, res) => {

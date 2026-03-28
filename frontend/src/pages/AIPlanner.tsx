@@ -937,12 +937,12 @@ const AIPlanner = () => {
     setActiveDay(null);
 
     try {
-      const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/generate-itinerary`;
+      const CHAT_URL = `${import.meta.env.VITE_API_URL}/itinerary/generate`;
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          Authorization: `Bearer ${localStorage.getItem('accessToken')}`,
         },
         body: JSON.stringify({
           destination, country,

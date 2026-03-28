@@ -7,6 +7,8 @@ import Footer from "@/components/Footer";
 import { useState } from "react";
 import { toast } from "sonner";
 
+import api from '@/services/api';
+
 const featureInfo: Record<string, { title: string; description: string; icon: React.ElementType; gradient: string; emoji: string }> = {
   "/explore": {
     title: "Discover Trips",
@@ -64,12 +66,13 @@ const ComingSoon = () => {
 
     setLoading(true);
     try {
-      // Newsletter mock
-      toast.success("You're on the priority list! 🚀 Check your inbox for confirmation.");
+      const { data } = await api.post('/waitlist', { email, feature: path });
+      toast.success(data.message || "You're on the priority list! 🚀 Check your inbox for confirmation.");
       setEmail("");
-      setNotified(true); // Set notified to true on success
-    } catch (error) {
-       toast.error("Something went wrong. Please try again.");
+      setNotified(true);
+    } catch (error: any) {
+      const msg = error.response?.data?.message || error.response?.data?.error || "Something went wrong. Please try again.";
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

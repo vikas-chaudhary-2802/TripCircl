@@ -56,6 +56,15 @@ const tripService = {
 
     return updated;
   },
+
+  /**
+   * Get all members of a trip.
+   */
+  getTripMembers: async (tripId) => {
+    const trip = await tripRepository.findById(tripId);
+    if (!trip) throw new AppError('Trip not found', 404);
+    return tripRepository.findMembersByTrip(tripId);
+  },
 };
 
 module.exports = tripService;

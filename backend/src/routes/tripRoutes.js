@@ -14,6 +14,7 @@ router.get('/:id', tripController.getOne);
 router.use(authenticate);
 router.post('/', validate('createTrip'), tripController.create);
 router.get('/me', tripController.getMyTrips);
+router.get('/:id/members', tripController.getMembers);
 router.post('/:id/join', tripController.join);
 router.post('/:id/approve/:userId', tripController.approveMember);
 

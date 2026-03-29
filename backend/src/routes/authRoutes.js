@@ -18,6 +18,7 @@ router.post('/logout', validate('logout'), authController.logout);
 
 // Protected routes
 router.get('/me', authenticate, authController.getMe);
+router.patch('/me', authenticate, authController.updateMe);
 router.post('/logout-all', authenticate, authController.logoutAll);
 router.get('/sessions', authenticate, authController.getSessions);
 

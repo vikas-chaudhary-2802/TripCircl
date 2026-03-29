@@ -119,6 +119,24 @@ const authService = {
   getSessions: async ({ userId }) => {
     return tokenRepository.getActiveSessionsForUser(userId);
   },
+
+  /**
+   * Update user profile (name, avatar, etc.).
+   */
+  updateProfile: async ({ userId, updates }) => {
+    // Only allow safe fields to be updated
+    const allowed = ['name', 'avatar'];
+    const safeUpdates = {};
+    for (const key of allowed) {
+      if (updates[key] !== undefined) safeUpdates[key] = updates[key];
+    }
+    if (Object.keys(safeUpdates).length === 0) {
+      throw new AppError('No valid fields to update', 400);
+    }
+    const user = await userRepository.updateById(userId, safeUpdates);
+    if (!user) throw new AppError('User not found', 404);
+    return user;
+  },
 };
 
 module.exports = authService;

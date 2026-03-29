@@ -62,6 +62,14 @@ const tripController = {
     await tripService.approveMember(id, userId, req.user._id);
     return res.success(null, 'Member approved successfully');
   }),
+
+  /**
+   * GET /api/trips/:id/members
+   */
+  getMembers: asyncHandler(async (req, res) => {
+    const members = await tripService.getTripMembers(req.params.id);
+    return res.success({ members }, 'Trip members retrieved successfully');
+  }),
 };
 
 module.exports = tripController;

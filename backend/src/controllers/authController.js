@@ -67,6 +67,14 @@ const authController = {
     const sessions = await authService.getSessions({ userId: req.user._id });
     return res.success({ sessions }, 'Active sessions retrieved');
   }),
+
+  /**
+   * PATCH /api/auth/me   (protected)
+   */
+  updateMe: asyncHandler(async (req, res) => {
+    const user = await authService.updateProfile({ userId: req.user._id, updates: req.body });
+    return res.success({ user }, 'Profile updated successfully');
+  }),
 };
 
 module.exports = authController;

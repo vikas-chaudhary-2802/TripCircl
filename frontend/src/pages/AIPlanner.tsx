@@ -937,7 +937,7 @@ const AIPlanner = () => {
     setActiveDay(null);
 
     try {
-      const CHAT_URL = `${import.meta.env.VITE_API_URL}/itinerary/generate`;
+      const CHAT_URL = `https://tripcircl-backend.onrender.com/api/itinerary/generate`;
       const resp = await fetch(CHAT_URL, {
         method: "POST",
         headers: {

@@ -28,7 +28,7 @@ export interface Session {
 const authService = {
   /**
    * Register a new user with the custom backend.
-   * Note: this is separate from Supabase auth — use for custom API features.
+   * Register a new user with the backend.
    */
   register: async (name: string, email: string, password: string): Promise<AuthUser> => {
     const { data } = await api.post('/auth/register', { name, email, password });

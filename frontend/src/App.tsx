@@ -37,7 +37,7 @@ const App = () => {
   useEffect(() => {
     const handler = () => {
       clearTokens();
-      // Supabase session is separate — only clear backend tokens here
+      // Clear backend tokens on session expiry
     };
     window.addEventListener("auth:session-expired", handler);
     return () => window.removeEventListener("auth:session-expired", handler);

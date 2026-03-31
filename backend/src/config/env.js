@@ -3,7 +3,7 @@
 const dotenv = require('dotenv');
 dotenv.config();
 
-const required = ['MONGO_URI', 'JWT_SECRET', 'PORT', 'OPENAI_API_KEY'];
+const required = ['MONGO_URI', 'JWT_SECRET', 'PORT', 'NVIDIA_API_KEY'];
 required.forEach((key) => {
   if (!process.env[key]) {
     throw new Error(`Missing required environment variable: ${key}`);
@@ -21,8 +21,8 @@ module.exports = {
   JWT_ACCESS_EXPIRES_IN: process.env.JWT_ACCESS_EXPIRES_IN || '15m',
   JWT_REFRESH_EXPIRES_IN: process.env.JWT_REFRESH_EXPIRES_IN || '7d',
 
-  // OpenAI
-  OPENAI_API_KEY: process.env.OPENAI_API_KEY,
+  // NVIDIA
+  NVIDIA_API_KEY: process.env.NVIDIA_API_KEY,
 
   // CORS
   ALLOWED_ORIGINS: (process.env.ALLOWED_ORIGINS || 'http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://127.0.0.1:3000,http://localhost:8080,http://127.0.0.1:8080').split(','),
